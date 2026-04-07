@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #e2e8f0;
+  --color-accent: #7c3aed;
+  --color-accent-text: #a78bfa;
+  --color-surface: #0f0f1a;
+  --color-card: #1e1e35;
+  --color-sidebar: #151525;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-input: #151525;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --color-muted: #94a3b8;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+/* Blueprint grid background */
+@layer base {
+  .blueprint-grid {
+    position: relative;
+  }
+  .blueprint-grid::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(124,58,237,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,58,237,0.05) 1px, transparent 1px),
+      linear-gradient(rgba(124,58,237,0.09) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,58,237,0.09) 1px, transparent 1px);
+    background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+  }
+  .blueprint-grid > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Custom scrollbar - dark */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* LEGACY — supprimer quand les pages sont refaites avec ui/ components */
+/* Global dark overrides for dashboard forms */
+input[type="text"], input[type="email"], input[type="url"], input[type="password"],
+input[type="number"], input[type="tel"], input[type="search"],
+textarea, select {
+  background: #151525 !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: #e2e8f0 !important;
+}
+input::placeholder, textarea::placeholder { color: #64748b !important; }
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(124,58,237,0.4) !important;
+  box-shadow: 0 0 0 2px rgba(124,58,237,0.15) !important;
+}
+label { color: #cbd5e1 !important; }
+
+/* ── LEGACY Dark theme overrides — à supprimer progressivement ── */
+
+/* Backgrounds */
+.bg-white { background: #1e1e35 !important; border-color: rgba(255,255,255,0.07) !important; }
+.bg-surface { background: #0f0f1a !important; }
+.bg-gray-50, .bg-gray-100 { background: rgba(255,255,255,0.03) !important; }
+.bg-gray-200 { background: rgba(255,255,255,0.06) !important; }
+.bg-gray-300 { background: rgba(255,255,255,0.08) !important; }
+
+/* Tinted backgrounds → dark tints */
+.bg-blue-50 { background: rgba(59,130,246,0.10) !important; }
+.bg-blue-100 { background: rgba(59,130,246,0.15) !important; }
+.bg-sky-50 { background: rgba(14,165,233,0.10) !important; }
+.bg-sky-100 { background: rgba(14,165,233,0.15) !important; }
+.bg-green-50 { background: rgba(34,197,94,0.10) !important; }
+.bg-red-50 { background: rgba(239,68,68,0.10) !important; }
+.bg-orange-100 { background: rgba(249,115,22,0.15) !important; }
+.bg-amber-50 { background: rgba(245,158,11,0.10) !important; }
+.bg-emerald-50 { background: rgba(16,185,129,0.10) !important; }
+
+/* Borders */
+.border-gray-200, .border-gray-300 { border-color: rgba(255,255,255,0.07) !important; }
+.border-gray-100 { border-color: rgba(255,255,255,0.05) !important; }
+.border-blue-200 { border-color: rgba(59,130,246,0.20) !important; }
+.border-red-200 { border-color: rgba(239,68,68,0.20) !important; }
+.border-amber-200 { border-color: rgba(245,158,11,0.20) !important; }
+.border-orange-200 { border-color: rgba(249,115,22,0.20) !important; }
+.divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.05) !important; }
+
+/* Text */
+.text-gray-900 { color: #e2e8f0 !important; }
+.text-gray-800 { color: #e2e8f0 !important; }
+.text-gray-700 { color: #cbd5e1 !important; }
+.text-gray-600 { color: #94a3b8 !important; }
+.text-gray-500 { color: #64748b !important; }
+.text-gray-400 { color: #64748b !important; }
+.text-gray-300 { color: #475569 !important; }
+.text-primary { color: #e2e8f0 !important; }
+.text-blue-600 { color: #60a5fa !important; }
+.text-blue-700 { color: #93c5fd !important; }
+.text-sky-600 { color: #38bdf8 !important; }
+.text-sky-700 { color: #7dd3fc !important; }
+.text-green-600 { color: #4ade80 !important; }
+.text-green-700 { color: #86efac !important; }
+.text-orange-600 { color: #fb923c !important; }
+.text-red-700 { color: #fca5a5 !important; }
+.text-emerald-700 { color: #6ee7b7 !important; }
+
+/* Buttons */
+.bg-accent { background: linear-gradient(135deg, #7c3aed, #3b82f6) !important; color: white !important; }
+.hover\:bg-gray-100:hover { background: rgba(255,255,255,0.05) !important; }
+.hover\:bg-gray-200:hover { background: rgba(255,255,255,0.08) !important; }
+.hover\:bg-gray-300:hover { background: rgba(255,255,255,0.10) !important; }
+.hover\:bg-gray-50:hover { background: rgba(255,255,255,0.03) !important; }
+.hover\:bg-blue-100:hover { background: rgba(59,130,246,0.20) !important; }
+.hover\:bg-sky-100:hover { background: rgba(14,165,233,0.20) !important; }
+.hover\:bg-red-50:hover { background: rgba(239,68,68,0.08) !important; }
+
+/* Status badges */
+.bg-yellow-100 { background: rgba(234,179,8,0.15) !important; }
+.bg-green-100 { background: rgba(34,197,94,0.15) !important; }
+.bg-red-100 { background: rgba(239,68,68,0.15) !important; }
+.bg-purple-100 { background: rgba(124,58,237,0.15) !important; }
+
+/* Shadows */
+.hover\:shadow-lg:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.4) !important; }
+.shadow-xl { box-shadow: 0 12px 40px rgba(0,0,0,0.5) !important; }
+.shadow-2xl { box-shadow: 0 16px 50px rgba(0,0,0,0.6) !important; }
+.shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important; }
+
+/* Ring overrides */
+.ring-accent\/20 { --tw-ring-color: rgba(124,58,237,0.2) !important; }
+
+/* TipTap editor */
+.tiptap-editor .tiptap { outline: none; color: #e2e8f0; }
+.tiptap-editor .tiptap p { margin: 0.25em 0; }
+.tiptap-editor .tiptap strong { font-weight: 700; }
+.tiptap-editor .tiptap em { font-style: italic; }
+.tiptap-editor .tiptap s { text-decoration: line-through; }
+.tiptap-editor .tiptap ul { list-style: disc; padding-left: 1.2em; margin: 0.25em 0; }
+.tiptap-editor .tiptap ol { list-style: decimal; padding-left: 1.2em; margin: 0.25em 0; }
+.tiptap-editor .tiptap a { color: var(--color-accent-text); text-decoration: underline; }

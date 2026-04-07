@@ -1,0 +1,314 @@
+import { useState, useEffect, useRef } from 'react';
+import { Rocket, Loader, CheckCircle, AlertCircle, X, Copy, Check, Globe, ExternalLink, Pencil } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { deployApi } from '../services/api';
+import useSiteStore from '../stores/siteStore';
+import { trackSitePublished } from '../lib/posthog';
+import DeployProgressModal from './DeployProgressModal';
+
+const SERVER_IP = '213.221.149.157';
+
+export default function PublishButton({ siteId, status, domain, compact = false }) {
+  const [publishing, setPublishing] = useState(false);
+  const [publishStatus, setPublishStatus] = useState(status);
+  const [showDnsModal, setShowDnsModal] = useState(false);
+  const [showDeployModal, setShowDeployModal] = useState(false);
+  const [deployData, setDeployData] = useState({ deployStep: null, deployProgress: 0, buildError: null });
+  const pollRef = useRef(null);
+  const { fetchSites, currentSite } = useSiteStore();
+
+  const siteDomain = domain || currentSite?.domain || '';
+
+  useEffect(() => { setPublishStatus(status); }, [status]);
+  useEffect(() => {
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
+
+  const handleDomainChange = async (newDomain) => {
+    try {
+      const { updateSite, fetchSites: refetch } = useSiteStore.getState();
+      await updateSite(siteId, { domain: newDomain });
+      refetch();
+      toast.success('Domaine mis à jour');
+    } catch { toast.error('Erreur lors de la mise à jour du domaine'); }
+  };
+
+  const handlePublishClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDnsModal(true);
+  };
+
+  const startPolling = () => {
+    pollRef.current = setInterval(async () => {
+      try {
+        const data = await deployApi.status(siteId);
+        setPublishStatus(data.status);
+        setDeployData({ deployStep: data.deployStep, deployProgress: data.deployProgress, buildError: data.buildError });
+        if (data.status === 'published') {
+          clearInterval(pollRef.current);
+          setPublishing(false);
+          trackSitePublished(siteId, currentSite?.name, siteDomain);
+        } else if (data.status === 'error') {
+          clearInterval(pollRef.current);
+          setPublishing(false);
+        }
+      } catch {
+        clearInterval(pollRef.current);
+        setPublishing(false);
+      }
+    }, 2000);
+  };
+
+  const handleConfirmPublish = async () => {
+    setShowDnsModal(false);
+    setPublishing(true);
+    setPublishStatus('building');
+    setDeployData({ deployStep: 'building', deployProgress: 5, buildError: null });
+    setShowDeployModal(true);
+
+    try {
+      await deployApi.publish(siteId);
+      startPolling();
+    } catch (err) {
+      setPublishing(false);
+      setPublishStatus('error');
+      setDeployData(d => ({ ...d, buildError: err?.error || 'Erreur lors du déploiement' }));
+    }
+  };
+
+  const handleRetry = () => {
+    setShowDeployModal(false);
+    handleConfirmPublish();
+  };
+
+  const handleCloseDeployModal = () => {
+    setShowDeployModal(false);
+    if (pollRef.current) clearInterval(pollRef.current);
+    fetchSites();
+  };
+
+  const icon = publishing ? <Loader size={compact ? 14 : 16} className="animate-spin" /> :
+    publishStatus === 'published' ? <CheckCircle size={compact ? 14 : 16} /> :
+    publishStatus === 'error' ? <AlertCircle size={compact ? 14 : 16} /> :
+    <Rocket size={compact ? 14 : 16} />;
+
+  const colors = publishing ? 'bg-yellow-100 text-yellow-700' :
+    publishStatus === 'published' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
+    publishStatus === 'error' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
+    'bg-accent/10 text-accent-text hover:bg-accent/20';
+
+  return (
+    <>
+      <button
+        onClick={handlePublishClick}
+        disabled={publishing}
+        className={`flex items-center gap-1.5 ${compact ? 'px-3 py-1.5 text-sm' : 'px-5 py-2.5'} rounded-lg font-medium transition-colors ${colors}`}
+      >
+        {icon}
+        {compact ? (publishing ? '...' : 'Publier') : (publishing ? 'Déploiement...' : publishStatus === 'published' ? 'Republier' : 'Publier')}
+      </button>
+
+      {showDnsModal && (
+        <DnsModal
+          domain={siteDomain}
+          serverIp={SERVER_IP}
+          isRepublish={publishStatus === 'published'}
+          onConfirm={handleConfirmPublish}
+          onClose={() => setShowDnsModal(false)}
+          onDomainChange={handleDomainChange}
+        />
+      )}
+
+      {showDeployModal && (
+        <DeployProgressModal
+          deployStep={deployData.deployStep}
+          deployProgress={deployData.deployProgress}
+          status={publishStatus}
+          buildError={deployData.buildError}
+          domain={siteDomain}
+          onClose={handleCloseDeployModal}
+          onRetry={handleRetry}
+        />
+      )}
+    </>
+  );
+}
+
+function CopyRow({ label, value }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Impossible de copier');
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex-1 min-w-0">
+        <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider block">{label}</span>
+        <span className="text-sm font-mono text-slate-200 block truncate">{value}</span>
+      </div>
+      <button
+        onClick={handleCopy}
+        className={`shrink-0 p-1.5 rounded-md transition-all ${copied ? 'bg-green-500/15 text-green-400' : 'hover:bg-white/[0.05] text-slate-500 hover:text-slate-300'}`}
+        aria-label={copied ? 'Copié' : `Copier ${label}`}
+      >
+        {copied ? <Check size={14} /> : <Copy size={14} />}
+      </button>
+    </div>
+  );
+}
+
+function DnsModal({ domain, serverIp, isRepublish, onConfirm, onClose, onDomainChange }) {
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState(domain || '');
+  const [saving, setSaving] = useState(false);
+  const currentDomain = editValue || domain;
+
+  const handleSaveDomain = async () => {
+    const trimmed = editValue.trim().toLowerCase();
+    if (!trimmed) { toast.error('Le domaine ne peut pas être vide'); return; }
+    if (trimmed === domain) { setEditing(false); return; }
+    setSaving(true);
+    await onDomainChange(trimmed);
+    setSaving(false);
+    setEditing(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="dns-modal-title" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div
+        className="relative rounded-2xl max-w-lg w-full overflow-hidden"
+        style={{ background: '#1e1e35', border: '1px solid rgba(255,255,255,0.07)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                <Globe size={20} className="text-accent" />
+              </div>
+              <div>
+                <h3 id="dns-modal-title" className="font-semibold text-lg text-white">
+                  {isRepublish ? 'Republier le site' : 'Publier le site'}
+                </h3>
+                {editing ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      value={editValue}
+                      onChange={e => setEditValue(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSaveDomain()}
+                      className="text-sm px-2 py-1 border border-gray-300 rounded-md font-mono outline-none focus:ring-2 focus:ring-accent w-56"
+                      placeholder="monsite.fr"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSaveDomain}
+                      disabled={saving}
+                      className="text-xs px-2 py-1 bg-accent text-primary rounded-md hover:bg-accent/90"
+                    >
+                      {saving ? '...' : 'OK'}
+                    </button>
+                    <button
+                      onClick={() => { setEditing(false); setEditValue(domain || ''); }}
+                      className="text-xs px-2 py-1 text-slate-400 hover:text-slate-200"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm text-slate-400">{currentDomain || <span className="italic text-slate-500">Aucun domaine</span>}</p>
+                    <button
+                      onClick={() => setEditing(true)}
+                      className="p-1 rounded-md hover:bg-white/[0.05] text-slate-500 hover:text-slate-300 transition-colors"
+                      title="Modifier le domaine"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/[0.05] text-slate-500 hover:text-slate-300 transition-colors" aria-label="Fermer">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          {!currentDomain ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-slate-400">Configurez un domaine pour continuer.</p>
+              <button onClick={() => setEditing(true)} className="mt-2 text-sm text-accent hover:underline">Ajouter un domaine</button>
+            </div>
+          ) : (
+            <>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                  <span className="w-5 h-5 bg-accent/10 text-accent rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                  Configuration DNS requise
+                </h4>
+                <p className="text-xs text-slate-400 mb-3">
+                  Ajoutez ces enregistrements DNS chez votre registrar (OVH, Infomaniak, Gandi, etc.) :
+                </p>
+                <div className="space-y-2">
+                  <CopyRow label="Type A — Domaine principal" value={`${currentDomain} → ${serverIp}`} />
+                  <CopyRow label="Type A — Sous-domaine www" value={`www.${currentDomain} → ${serverIp}`} />
+                  <CopyRow label="Type (pour les formulaires DNS)" value="A" />
+                  <CopyRow label="Valeur / Cible" value={serverIp} />
+                </div>
+              </div>
+
+              <div className="rounded-lg p-3" style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.20)' }}>
+                <p className="text-xs text-amber-400">
+                  <strong>Note :</strong> La propagation DNS peut prendre de 5 minutes à 48 heures.
+                  Le site sera accessible dès que le DNS pointe vers notre serveur.
+                  Un certificat SSL (HTTPS) sera automatiquement configuré.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                  <span className="w-5 h-5 bg-accent/10 text-accent rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                  Lancer le déploiement
+                </h4>
+                <p className="text-xs text-slate-400">
+                  Le site sera buildé puis déployé sur le serveur. Nginx sera configuré automatiquement.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 flex items-center justify-end gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] rounded-lg transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={!currentDomain || editing}
+            className={`px-5 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${!currentDomain || editing ? 'text-slate-600 cursor-not-allowed' : 'bg-accent text-primary hover:bg-accent/90'}`}
+            style={!currentDomain || editing ? { background: 'rgba(255,255,255,0.06)' } : undefined}
+          >
+            <Rocket size={14} />
+            {isRepublish ? 'Republier maintenant' : 'Publier maintenant'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

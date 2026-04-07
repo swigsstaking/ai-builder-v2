@@ -1,0 +1,31 @@
+<section class="section section-city-about" data-section="city-about">
+  <div class="container">
+    <div class="city-about-layout">
+      <div class="city-about-left">
+        {{#if imageUrl}}
+          <img
+            src="{{imageUrl}}"
+            {{#if imageMediaId_srcset}}srcset="{{imageMediaId_srcset}}"{{/if}}
+            sizes="(max-width: 768px) 100vw, 45vw"
+            {{#if imageMediaId_width}}width="{{imageMediaId_width}}"{{/if}}
+            {{#if imageMediaId_height}}height="{{imageMediaId_height}}"{{/if}}
+            alt="{{imageMediaId_alt}}"
+            class="city-about-img"
+            loading="lazy"
+            data-editable="imageMediaId"
+          >
+        {{else}}
+          <div class="img-placeholder city-about-placeholder" data-editable="imageMediaId">
+            <span style="color:#9ca3af;font-size:0.75rem;">Image</span>
+          </div>
+        {{/if}}
+      </div>
+      <div class="city-about-right">
+        {{#if title}}<h2 class="city-about-title" data-editable="title">{{title}}</h2>{{/if}}
+        <span class="city-about-divider"></span>
+        {{#if body}}<div class="city-about-body" data-editable="body">{{{body}}}</div>{{/if}}
+        {{#if ctaText}}<a href="{{ctaUrl}}" class="btn btn-accent">{{ctaText}}</a>{{/if}}
+      </div>
+    </div>
+  </div>
+</section>

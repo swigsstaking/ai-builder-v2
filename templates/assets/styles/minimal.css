@@ -1,0 +1,150 @@
+/* Design Style: Minimal
+ * Functional, clean, no decoration
+ * Tight spacing, subtle borders, monochromatic
+ */
+
+/* ===== TYPOGRAPHY ===== */
+.style-minimal h1 { font-size: 2.2rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; }
+.style-minimal h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+.style-minimal p { font-size: 0.95rem; line-height: 1.6; }
+.style-minimal .section-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 1.75rem; }
+.style-minimal .section-title::after { display: none; }
+.style-minimal .section-subtitle { font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin-bottom: 1.75rem; }
+
+/* ===== SECTIONS ===== */
+.style-minimal .section { padding: 3rem 0; }
+.style-minimal .section-hero { padding: 3.5rem 0; background: #fff; }
+.style-minimal .section.light { background: #fafafa; }
+.style-minimal .section.dark { background: var(--color-primary); }
+
+/* ===== HEADER ===== */
+.style-minimal .site-header {
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  box-shadow: none;
+}
+.style-minimal .logo-text { font-weight: 600; font-size: 1rem; }
+.style-minimal .header-cta { font-size: 0.85rem; font-weight: 500; }
+
+/* ===== HERO ===== */
+.style-minimal .hero-two-col { gap: 3rem; }
+.style-minimal .hero-text-col h1 { margin-bottom: 0.75rem; }
+.style-minimal .hero-sub { font-size: 1rem; color: #6b7280; line-height: 1.55; }
+.style-minimal .hero-img {
+  border-radius: 4px;
+  box-shadow: none;
+  border: 1px solid #e5e7eb;
+}
+.style-minimal .hero-bullets li { font-size: 0.9rem; color: #555; padding: 0.35rem 0; }
+.style-minimal .hero-bullets li::before { width: 5px; height: 5px; background: #9ca3af; }
+
+/* ===== BUTTONS ===== */
+.style-minimal .btn {
+  border-radius: 4px;
+  padding: 0.65rem 1.5rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  box-shadow: none;
+}
+.style-minimal .btn-accent { box-shadow: none; }
+.style-minimal .btn-accent:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); transform: translateY(-1px); filter: none; }
+.style-minimal .btn-outline-dark { border-width: 1px; }
+
+/* ===== SERVICE CARDS ===== */
+.style-minimal .services-grid { gap: 1rem; }
+.style-minimal .service-card {
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+  padding: 1.25rem;
+  transition: border-color 0.2s ease;
+}
+.style-minimal .service-card:hover { border-color: var(--color-primary); box-shadow: none; transform: none; }
+.style-minimal .service-card img { border-radius: 2px; }
+.style-minimal .service-card h3 { font-size: 1rem; font-weight: 600; }
+.style-minimal .service-card p { font-size: 0.88rem; color: #6b7280; }
+
+/* ===== TESTIMONIALS ===== */
+.style-minimal .testimonial-card {
+  border: 1px solid #e5e7eb;
+  border-left: none;
+  border-radius: 4px;
+  padding: 1.25rem;
+  background: #fff;
+}
+.style-minimal .testimonial-card:hover { box-shadow: none; }
+.style-minimal .testimonial-card blockquote { font-size: 0.9rem; line-height: 1.6; color: #555; }
+.style-minimal .testimonial-quote-mark { display: none; }
+.style-minimal .testimonial-card cite { font-size: 0.78rem; color: #9ca3af; }
+
+/* ===== CTA BANNER ===== */
+.style-minimal .cta-rounded {
+  border-radius: 4px;
+  padding: 2rem 2.5rem;
+  box-shadow: none;
+}
+.style-minimal .cta-rounded h2 { font-size: 1.3rem; font-weight: 600; }
+.style-minimal .cta-rounded p { font-size: 0.92rem; }
+
+/* ===== FAQ ===== */
+.style-minimal .faq-item {
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+}
+.style-minimal .faq-item summary { font-weight: 500; font-size: 0.92rem; padding: 0.9rem 0; }
+.style-minimal .faq-item p { font-size: 0.88rem; color: #6b7280; }
+
+/* ===== GUARANTEE ===== */
+.style-minimal .guarantee-title { font-size: 1.2rem; font-weight: 600; }
+.style-minimal .guarantee-text { font-size: 0.9rem; color: #6b7280; }
+
+/* ===== WHY US ===== */
+.style-minimal .why-us-img { border-radius: 4px; box-shadow: none; border: 1px solid #e5e7eb; }
+.style-minimal .why-us-text-col h2 { font-size: 1.4rem; }
+.style-minimal .why-us-subtitle { font-size: 0.92rem; color: #6b7280; }
+.style-minimal .why-us-list li { font-size: 0.9rem; }
+.style-minimal .why-us-list li::before { width: 5px; height: 5px; background: #9ca3af; }
+.style-minimal .why-us-list li strong { font-size: 0.92rem; }
+
+/* ===== TEAM ===== */
+.style-minimal .team-member {
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  box-shadow: none;
+}
+.style-minimal .team-member:hover { box-shadow: none; }
+.style-minimal .team-member h3 { font-size: 0.95rem; }
+.style-minimal .team-member p { font-size: 0.82rem; color: #9ca3af; }
+
+/* ===== MAP ===== */
+.style-minimal .section-map { padding: 2.5rem 0; }
+.style-minimal .section-map iframe { border-radius: 4px; border: 1px solid #e5e7eb; box-shadow: none; }
+
+/* ===== TEXT HIGHLIGHT ===== */
+.style-minimal .section-text-highlight { padding: 2.5rem 0; }
+.style-minimal .text-highlight-content { font-size: 1rem; font-weight: 400; line-height: 1.7; }
+.style-minimal .text-highlight-content strong { font-weight: 600; }
+
+/* ===== GOOGLE REVIEWS ===== */
+.style-minimal .review-card-google { border-radius: 4px; border: 1px solid #e5e7eb; box-shadow: none; }
+.style-minimal .review-card-google:hover { box-shadow: none; border-color: #d1d5db; }
+.style-minimal .review-quote { border-left: 2px solid #e5e7eb; }
+
+/* ===== TWO COLUMN ===== */
+.style-minimal .two-col { gap: 3rem; }
+.style-minimal .col-text h2 { font-size: 1.4rem; }
+.style-minimal .col-image img { border-radius: 4px; box-shadow: none; border: 1px solid #e5e7eb; }
+.style-minimal .body-text p { font-size: 0.92rem; color: #6b7280; }
+
+/* ===== FOOTER ===== */
+.style-minimal .site-footer { border-top: 1px solid #e5e7eb; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .style-minimal h1 { font-size: 1.8rem; }
+  .style-minimal h2 { font-size: 1.3rem; }
+  .style-minimal .section { padding: 2.5rem 0; }
+  .style-minimal .section-hero { padding: 2.5rem 0; }
+  .style-minimal .cta-rounded { padding: 1.5rem; }
+}

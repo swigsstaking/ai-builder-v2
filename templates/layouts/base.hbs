@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{#if page.seo.title}}{{page.seo.title}}{{else}}{{page.title}} - {{site.business.name}}{{/if}}{{#if site.seoDefaults.titleSuffix}} {{site.seoDefaults.titleSuffix}}{{/if}}</title>
+  <meta name="description" content="{{#if page.seo.description}}{{page.seo.description}}{{else}}{{site.business.name}} - {{site.business.activity}} à {{site.business.city}}{{/if}}">
+  {{#if page.seo.keywords}}<meta name="keywords" content="{{#each page.seo.keywords}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}">{{/if}}
+  {{#if page.seo.canonicalUrl}}
+  <link rel="canonical" href="{{page.seo.canonicalUrl}}">
+  {{else if site.domain}}
+  <link rel="canonical" href="https://{{site.domain}}/{{#unless page.isMainHomepage}}{{page.slug}}.html{{/unless}}">
+  {{/if}}
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{page.seo.title}}">
+  <meta property="og:description" content="{{page.seo.description}}">
+  <meta property="og:type" content="website">
+  {{#if site.domain}}<meta property="og:url" content="https://{{site.domain}}/{{#unless page.isMainHomepage}}{{page.slug}}.html{{/unless}}">{{/if}}
+  {{#if heroImagePreload}}{{#if site.domain}}<meta property="og:image" content="https://{{site.domain}}/{{heroImagePreload}}">{{/if}}{{/if}}
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">{{{jsonLd}}}</script>
+
+  {{#if heroImagePreload}}<link rel="preload" as="image" href="{{heroImagePreload}}" type="image/webp"{{#if heroImageSrcset}} imagesrcset="{{heroImageSrcset}}" imagesizes="(max-width: 768px) 100vw, 50vw"{{/if}}>{{/if}}
+
+  <!-- Font preloads (self-hosted woff2) -->
+  {{{fontPreloads}}}
+
+  <!-- Favicon -->
+  {{#if site.design.faviconMediaId}}
+  <link rel="icon" href="images/{{site.design.faviconMediaId.filename}}" type="image/{{faviconType}}">
+  {{else}}
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  {{/if}}
+
+  <!-- Critical CSS inline -->
+  <style>
+    {{{cssVars}}}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+    body{font-family:var(--font-body);color:var(--color-text);background:var(--color-bg);line-height:1.6}
+    h1,h2,h3,h4{font-family:var(--font-heading);line-height:1.2;color:var(--color-primary)}
+    img{max-width:100%;height:auto;display:block}
+    a{color:var(--color-accent);text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+  </style>
+
+  <!-- Main CSS (non-render-blocking) -->
+  <link rel="preload" href="main.css?v={{buildTimestamp}}" as="style">
+  <link rel="stylesheet" href="main.css?v={{buildTimestamp}}" media="print" onload="this.media='all'">
+
+  {{#if site.tracking.headerCode}}{{{site.tracking.headerCode}}}{{/if}}
+</head>
+<body class="style-{{site.designStyle}}">
+  {{> header}}
+
+  <main>
+    {{{sections}}}
+  </main>
+
+  {{> footer}}
+
+  {{#ifEnabled site.posthog.enabled}}
+  <script>
+    window.__posthogKey = '{{site.posthog.apiKey}}';
+    window.__posthogHost = '{{site.posthog.apiHost}}';
+    function initPosthog() {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onFeatureFlags onSessionId setPersonProperties".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init(window.__posthogKey, {api_host: window.__posthogHost, persistence: 'localStorage'});
+
+      // Track section visibility (scroll depth per section)
+      var tracked = {};
+      var sIdx = 0;
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          var key = entry.target.dataset.section + '-' + entry.target.dataset.idx;
+          if (entry.isIntersecting && !tracked[key]) {
+            tracked[key] = true;
+            posthog.capture('section_viewed', {
+              section_type: entry.target.dataset.section,
+              section_index: parseInt(entry.target.dataset.idx),
+              page: window.location.pathname
+            });
+          }
+        });
+      }, { threshold: 0.3 });
+      document.querySelectorAll('section[data-section]').forEach(function(s) {
+        s.dataset.idx = sIdx++;
+        observer.observe(s);
+      });
+
+      // Track CTA clicks
+      document.addEventListener('click', function(e) {
+        var btn = e.target.closest('a.cta-button, a.btn, button.cta-button, button.btn, .cta-banner a, .hero a.btn');
+        if (btn) {
+          var sec = btn.closest('section[data-section]');
+          posthog.capture('cta_clicked', {
+            text: btn.textContent.trim().substring(0, 80),
+            href: btn.href || '',
+            section_type: sec ? sec.dataset.section : '',
+            page: window.location.pathname
+          });
+        }
+      });
+    }
+  </script>
+  {{> cookie-consent}}
+  {{/ifEnabled}}
+
+  <!-- Inline edit bridge (for admin preview) -->
+  <script>
+    if (window.parent !== window) {
+      document.body.classList.add('is-editor');
+      // === Nav link interception: switch editor page on click ===
+      document.querySelectorAll('a[href]').forEach(function(a) {
+        var href = a.getAttribute('href');
+        if (href && href.endsWith('.html')) {
+          a.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.parent.postMessage({
+              type: 'resamatic:navigate',
+              href: href,
+            }, '*');
+          });
+        }
+      });
+
+      // === Click anywhere in section → select that section ===
+      document.querySelectorAll('[data-section]').forEach(function(sec) {
+        sec.style.cursor = 'pointer';
+        sec.addEventListener('click', function(e) {
+          // Don't override data-editable clicks or inline editing
+          if (e.target.closest('[data-editable]') || e.target.isContentEditable) return;
+          e.preventDefault();
+          window.parent.postMessage({
+            type: 'resamatic:edit',
+            field: '',
+            sectionType: sec.dataset.section,
+            isMedia: false,
+          }, '*');
+        });
+      });
+
+      // === Click-to-edit: hover highlights + click sends message to parent ===
+      document.querySelectorAll('[data-editable]').forEach(function(el) {
+        el.style.cursor = 'pointer';
+        el.style.position = el.style.position || 'relative';
+        var isMedia = el.dataset.editable.indexOf('MediaId') !== -1;
+        el.addEventListener('mouseenter', function() {
+          el.style.outline = '2px dashed rgba(200,169,126,0.7)';
+          el.style.outlineOffset = '3px';
+        });
+        el.addEventListener('mouseleave', function() {
+          if (!el.isContentEditable) {
+            el.style.outline = '';
+            el.style.outlineOffset = '';
+            el.blur();
+          }
+        });
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var section = el.closest('[data-section]');
+          window.parent.postMessage({
+            type: 'resamatic:edit',
+            field: el.dataset.editable,
+            sectionType: section ? section.dataset.section : '',
+            isMedia: isMedia,
+          }, '*');
+        });
+
+        // === Double-click inline editing for all text fields ===
+        var field = el.dataset.editable;
+        var isHtmlField = field === 'body' || field === 'text';
+        if (!isMedia) {
+          el.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (el.isContentEditable) return;
+            el.contentEditable = 'true';
+            el.style.outline = '2px solid rgba(200,169,126,1)';
+            el.style.outlineOffset = '3px';
+            el.style.background = 'rgba(255,255,255,0.9)';
+            // Suppress browser default focus ring
+            el.style.setProperty('-webkit-focus-ring-color', 'transparent');
+            var origOutline = el.style.cssText;
+            el.focus();
+
+            function finish() {
+              el.contentEditable = 'false';
+              el.style.outline = '';
+              el.style.outlineOffset = '';
+              el.style.background = '';
+              el.removeEventListener('blur', finish);
+              el.removeEventListener('keydown', onKey);
+              var section = el.closest('[data-section]');
+              window.parent.postMessage({
+                type: 'resamatic:inlineEdit',
+                field: el.dataset.editable,
+                sectionType: section ? section.dataset.section : '',
+                value: isHtmlField ? el.innerHTML : el.textContent,
+              }, '*');
+            }
+            function onKey(ev) {
+              if (ev.key === 'Escape') { el.blur(); }
+              // For HTML fields, allow Enter for new lines; for plain text, Enter = done
+              if (ev.key === 'Enter' && !ev.shiftKey && !isHtmlField) { ev.preventDefault(); el.blur(); }
+            }
+            el.addEventListener('blur', finish);
+            el.addEventListener('keydown', onKey);
+          });
+        }
+      });
+
+      // === Real-time updates from parent editor ===
+      window.addEventListener('message', function(e) {
+        var d = e.data;
+        if (!d || !d.type) return;
+
+        // Update text content in preview
+        if (d.type === 'resamatic:updateField') {
+          var section = document.querySelector('[data-section="' + d.sectionType + '"]');
+          if (!section) return;
+          var el = section.querySelector('[data-editable="' + d.field + '"]');
+          if (el) {
+            var htmlFields = ['body', 'text'];
+            if (htmlFields.indexOf(d.field) !== -1) { el.innerHTML = d.value; }
+            else { el.textContent = d.value; }
+          }
+        }
+
+        // Toggle section visibility
+        if (d.type === 'resamatic:toggleSection') {
+          var sec = document.querySelector('[data-section="' + d.sectionType + '"]');
+          if (sec) {
+            sec.style.display = d.visible ? '' : 'none';
+          }
+        }
+
+        // Update section colors
+        if (d.type === 'resamatic:updateStyle') {
+          var sec2 = document.querySelector('[data-section="' + d.sectionType + '"]');
+          if (sec2) {
+            sec2.style.backgroundColor = d.backgroundColor || '';
+            sec2.style.color = d.textColor || '';
+            var colorEls = sec2.querySelectorAll('h1,h2,h3,h4,p,span,li,a,strong,em,div');
+            if (d.textColor) {
+              colorEls.forEach(function(el) { el.style.color = d.textColor; });
+            } else {
+              colorEls.forEach(function(el) { el.style.color = ''; });
+            }
+          }
+        }
+
+        // Update header live
+        if (d.type === 'resamatic:updateHeader') {
+          var header = document.querySelector('.site-header');
+          if (header) {
+            if (d.bgColor) header.style.backgroundColor = d.bgColor;
+            else header.style.backgroundColor = '';
+            var logo = header.querySelector('.logo-text');
+            if (logo) {
+              if (d.logoColor) logo.style.color = d.logoColor;
+              else logo.style.color = '';
+            }
+            var cta = header.querySelector('.header-cta');
+            if (cta) {
+              if (d.ctaBgColor) cta.style.backgroundColor = d.ctaBgColor;
+              else cta.style.backgroundColor = '';
+              if (d.ctaTextColor) cta.style.color = d.ctaTextColor;
+              else cta.style.color = '';
+              if (d.ctaText) cta.textContent = d.ctaText;
+            }
+          }
+        }
+
+        // Highlight selected section
+        if (d.type === 'resamatic:selectSection') {
+          document.querySelectorAll('[data-section]').forEach(function(s) {
+            s.style.boxShadow = '';
+          });
+          var target = document.querySelector('[data-section="' + d.sectionType + '"]');
+          if (target) {
+            target.style.boxShadow = 'inset 0 0 0 2px rgba(200,169,126,0.5)';
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      });
+
+      // Tell parent we're ready
+      window.parent.postMessage({ type: 'resamatic:ready' }, '*');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+/* Design Style: Bold
+ * Oversized headings, strong contrast, high impact
+ * Thick borders, uppercase accents, dramatic spacing
+ */
+
+/* ===== TYPOGRAPHY ===== */
+.style-bold h1 { font-size: clamp(2.4rem, 5vw, 3.5rem); font-weight: 900; text-transform: uppercase; letter-spacing: -0.03em; line-height: 1.02; }
+.style-bold h2 { font-size: 2.4rem; font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; line-height: 1.1; }
+.style-bold .section-title { text-transform: uppercase; letter-spacing: 0.02em; font-weight: 800; font-size: 2.2rem; }
+.style-bold .section-title::after { height: 5px; width: 70px; border-radius: 0; }
+.style-bold .section-subtitle { text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.08em; color: var(--color-accent); font-weight: 600; }
+
+/* ===== SECTIONS ===== */
+.style-bold .section { padding: 5rem 0; }
+.style-bold .section-hero { padding: 6rem 0; }
+.style-bold .section.light { background: #f0f1f3; }
+.style-bold .section.dark { background: var(--color-primary); }
+.style-bold .section.dark .section-title { border-bottom: 4px solid var(--color-accent); padding-bottom: 0.75rem; display: inline-block; }
+.style-bold .section.dark .section-title::after { display: none; }
+
+/* Section dividers */
+.style-bold .section + .section { border-top: 4px solid var(--color-accent); }
+.style-bold .section.dark + .section.dark { border-top-color: rgba(255, 255, 255, 0.1); }
+
+/* ===== HEADER ===== */
+.style-bold .site-header {
+  border-bottom: 3px solid var(--color-primary);
+  background: var(--color-bg);
+}
+.style-bold .logo-text { font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+.style-bold .header-cta { font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85rem; }
+
+/* ===== HERO ===== */
+.style-bold .hero-text-col h1 { margin-bottom: 1.25rem; }
+.style-bold .hero-sub { font-size: 1.15rem; font-weight: 500; }
+.style-bold .hero-img {
+  border-radius: 4px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  border: 4px solid var(--color-primary);
+}
+.style-bold .hero-bullets li { font-weight: 500; font-size: 1rem; }
+.style-bold .hero-bullets li::before { content: ''; width: 10px; height: 10px; background: var(--color-accent); border-radius: 0; }
+
+/* ===== BUTTONS ===== */
+.style-bold .btn {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1rem 2.5rem;
+  font-size: 1.05rem;
+}
+.style-bold .btn-accent {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+}
+.style-bold .btn-accent:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+.style-bold .btn-outline-dark { border-width: 3px; font-weight: 700; }
+
+/* ===== SERVICE CARDS ===== */
+.style-bold .services-grid { gap: 2rem; }
+.style-bold .service-card {
+  border-radius: 4px;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  border-left: 5px solid var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.25s ease;
+}
+.style-bold .service-card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+}
+.style-bold .service-card h3 { text-transform: uppercase; font-weight: 800; letter-spacing: 0.01em; }
+
+/* ===== TESTIMONIALS ===== */
+.style-bold .testimonial-card {
+  border-left: 5px solid var(--color-primary);
+  border-radius: 4px;
+  background: #f8f8f8;
+  padding: 1.75rem;
+}
+.style-bold .testimonial-quote-mark { font-size: 4rem; color: var(--color-primary); opacity: 0.3; font-weight: 900; }
+.style-bold .testimonial-card blockquote { font-size: 1.05rem; font-weight: 500; line-height: 1.65; }
+.style-bold .testimonial-card cite { text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.8rem; font-weight: 700; }
+
+/* ===== CTA BANNER ===== */
+.style-bold .cta-rounded {
+  border-radius: 4px;
+  padding: 3.5rem 4rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+.style-bold .cta-rounded h2 { text-transform: uppercase; font-weight: 900; }
+
+/* ===== FAQ ===== */
+.style-bold .faq-item { border-radius: 4px; border: 2px solid rgba(0, 0, 0, 0.06); }
+.style-bold .faq-item summary { font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; font-size: 0.95rem; }
+.style-bold .faq-item[open] { border-color: var(--color-primary); }
+
+/* ===== GUARANTEE ===== */
+.style-bold .guarantee-title { text-transform: uppercase; font-weight: 900; letter-spacing: 0.02em; }
+
+/* ===== WHY US ===== */
+.style-bold .why-us-img { border-radius: 4px; border: 3px solid var(--color-primary); }
+.style-bold .why-us-text-col h2 { text-transform: uppercase; }
+.style-bold .why-us-list li::before { background: var(--color-accent); border-radius: 0; width: 10px; height: 10px; }
+.style-bold .why-us-list li strong { text-transform: uppercase; letter-spacing: 0.01em; }
+
+/* ===== TEAM ===== */
+.style-bold .team-member { border-radius: 4px; border: 2px solid rgba(0, 0, 0, 0.06); }
+.style-bold .team-member:hover { border-color: var(--color-primary); }
+
+/* ===== MAP ===== */
+.style-bold .section-map iframe { border-radius: 4px; border: 3px solid var(--color-primary); }
+
+/* ===== TEXT HIGHLIGHT ===== */
+.style-bold .section-text-highlight { padding: 4rem 0; }
+.style-bold .text-highlight-content { font-size: 1.2rem; font-weight: 600; }
+.style-bold .text-highlight-content strong { text-transform: uppercase; }
+
+/* ===== GOOGLE REVIEWS ===== */
+.style-bold .review-card-google { border-radius: 4px; border: 2px solid rgba(0, 0, 0, 0.06); }
+.style-bold .review-card-google:hover { border-color: var(--color-primary); }
+.style-bold .review-quote { border-left: 5px solid var(--color-accent); }
+
+/* ===== FOOTER ===== */
+.style-bold .site-footer { border-top: 4px solid var(--color-primary); }
+
+/* ===== TWO COLUMN ===== */
+.style-bold .col-text h2 { text-transform: uppercase; font-weight: 800; }
+.style-bold .col-image img { border-radius: 4px; border: 3px solid var(--color-primary); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .style-bold h1 { font-size: 2.2rem; }
+  .style-bold h2 { font-size: 1.8rem; }
+  .style-bold .section { padding: 3.5rem 0; }
+  .style-bold .section-hero { padding: 4rem 0; }
+  .style-bold .cta-rounded { padding: 2.5rem 2rem; }
+}
