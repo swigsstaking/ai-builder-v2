@@ -31,23 +31,27 @@ export function mapAiContentToSections(sections, content, options = {}) {
         if (content.servicesGrid) sData.data = { ...s.data, ...content.servicesGrid };
         {
           const aiServices = content.servicesGrid?.services || [];
-          const allServices = otherPages.map(op => {
-            const name = op.serviceFocus || op.keyword || op.title;
-            const nameLower = name.toLowerCase();
-            const aiMatch = aiServices.find(a => a.name && (nameLower.includes(a.name.toLowerCase()) || a.name.toLowerCase().includes(nameLower)));
-            return {
-              name,
-              shortDescription: aiMatch?.shortDescription || aiMatch?.description || '',
-              linkUrl: op.href,
-            };
-          });
-          if (allServices.length <= 4) {
-            sData.data.services = allServices;
-          } else {
-            const offset = currentPageIndex % allServices.length;
-            const rotated = [...allServices.slice(offset), ...allServices.slice(0, offset)];
-            sData.data.services = rotated.slice(0, 4);
+          // Only override with otherPages links if there are other pages
+          if (otherPages.length > 0) {
+            const allServices = otherPages.map(op => {
+              const name = op.serviceFocus || op.keyword || op.title;
+              const nameLower = name.toLowerCase();
+              const aiMatch = aiServices.find(a => a.name && (nameLower.includes(a.name.toLowerCase()) || a.name.toLowerCase().includes(nameLower)));
+              return {
+                name,
+                shortDescription: aiMatch?.shortDescription || aiMatch?.description || '',
+                linkUrl: op.href,
+              };
+            });
+            if (allServices.length <= 4) {
+              sData.data.services = allServices;
+            } else {
+              const offset = currentPageIndex % allServices.length;
+              const rotated = [...allServices.slice(offset), ...allServices.slice(0, offset)];
+              sData.data.services = rotated.slice(0, 4);
+            }
           }
+          // else: keep AI-generated services as-is
         }
         break;
 
