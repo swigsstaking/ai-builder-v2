@@ -198,15 +198,13 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
                 >
                   {aboutData.title || 'QUI SOMMES-NOUS'}
                 </h2>
-                <p data-editable="body" className="text-gray-600 text-lg leading-relaxed">
-                  {aboutData.body}
-                </p>
+                <div data-editable="body" className="text-gray-600 text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: aboutData.body }} />
                 {aboutData.bulletPoints && aboutData.bulletPoints.length > 0 && (
                   <ul className="mt-6 space-y-3">
                     {aboutData.bulletPoints.map((point, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <div className="w-1 h-6 flex-shrink-0 mt-0.5" style={{ backgroundColor: primary }} />
-                        <span className="text-gray-600 font-medium">{typeof point === 'string' ? point : point.text}</span>
+                        <span className="text-gray-600 font-medium">{typeof point === 'string' ? point : (point.value || point.text)}</span>
                       </li>
                     ))}
                   </ul>
@@ -481,9 +479,7 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
             >
               {ctaData.headline || 'PRÊT À DOMINER ?'}
             </h2>
-            <p data-editable="body" className="text-white/80 mb-10 text-xl">
-              {ctaData.body || 'Rejoignez les leaders de demain'}
-            </p>
+            <div data-editable="body" className="text-white/80 mb-10 text-xl" dangerouslySetInnerHTML={{ __html: ctaData.body || 'Rejoignez les leaders de demain' }} />
             <button
               className="px-12 py-6 font-bold uppercase tracking-wider text-lg hover:scale-105 transition-transform"
               style={{ backgroundColor: secondary, color: 'white' }}
@@ -514,9 +510,7 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
               </h2>
             </div>
             {contactData.body && (
-              <p data-editable="body" className="text-white/50 mb-12 text-lg">
-                {contactData.body}
-              </p>
+              <div data-editable="body" className="text-white/50 mb-12 text-lg" dangerouslySetInnerHTML={{ __html: contactData.body }} />
             )}
             <div className="space-y-6">
               {contactData.email && (

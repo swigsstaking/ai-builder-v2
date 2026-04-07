@@ -261,7 +261,7 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
                 >
                   {aboutData.title || 'À propos'}
                 </h2>
-                <p data-editable="content" className="text-white/80 text-lg leading-relaxed">{aboutData.body}</p>
+                <div data-editable="content" className="text-white/80 text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: aboutData.body }} />
               </div>
               {aboutData.stats && aboutData.stats.length > 0 && (
                 <div className={isMobile ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-6'}>

@@ -207,9 +207,7 @@ const MinimalTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
                 >
                   {aboutData.title || 'Notre cabinet'}
                 </h2>
-                <p className="text-gray-500 leading-relaxed" data-editable="content">
-                  {aboutData.body}
-                </p>
+                <div className="text-gray-500 leading-relaxed" data-editable="content" dangerouslySetInnerHTML={{ __html: aboutData.body }} />
               </div>
               {aboutData.stats && aboutData.stats.length > 0 && (
                 <div className={isMobile ? 'mt-8 grid grid-cols-2 gap-6' : 'grid grid-cols-2 gap-6'}>

@@ -234,13 +234,12 @@ const ElegantTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
                 >
                   {aboutData.title || 'La Maison'}
                 </h2>
-                <p
+                <div
                   className="text-white/60 text-lg leading-relaxed"
                   style={{ fontFamily: 'system-ui' }}
                   data-editable="content"
-                >
-                  {aboutData.body}
-                </p>
+                  dangerouslySetInnerHTML={{ __html: aboutData.body }}
+                />
               </div>
               {aboutData.stats && aboutData.stats.length > 0 && (
                 <div className={isMobile ? 'mt-12 grid grid-cols-2 gap-8' : 'flex flex-col gap-8'}>

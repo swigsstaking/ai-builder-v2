@@ -199,9 +199,7 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
                 >
                   {aboutData.title || 'Notre entreprise'}
                 </h2>
-                <p data-editable="body" className="text-gray-600 leading-relaxed text-lg">
-                  {aboutData.body}
-                </p>
+                <div data-editable="body" className="text-gray-600 leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: aboutData.body }} />
                 {aboutData.bulletPoints && aboutData.bulletPoints.length > 0 && (
                   <ul className="mt-6 space-y-3">
                     {aboutData.bulletPoints.map((point, idx) => (
@@ -212,7 +210,7 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
                         >
                           <ChevronRight className="w-3 h-3" style={{ color: primary }} />
                         </div>
-                        <span className="text-gray-600">{typeof point === 'string' ? point : point.text}</span>
+                        <span className="text-gray-600">{typeof point === 'string' ? point : (point.value || point.text)}</span>
                       </li>
                     ))}
                   </ul>
@@ -504,9 +502,7 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
             >
               {ctaData.headline || 'Prêt à commencer ?'}
             </h2>
-            <p data-editable="body" className="text-white/80 mb-8">
-              {ctaData.body || 'Contactez-nous dès aujourd\'hui pour discuter de votre projet'}
-            </p>
+            <div data-editable="body" className="text-white/80 mb-8" dangerouslySetInnerHTML={{ __html: ctaData.body || 'Contactez-nous dès aujourd\'hui pour discuter de votre projet' }} />
             <button
               className="px-8 py-3.5 font-medium rounded-lg shadow-xl hover:shadow-2xl transition-all hover:scale-105"
               style={{ backgroundColor: 'white', color: primary }}
@@ -534,9 +530,7 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
               {contactData.title || 'Contactez-nous'}
             </h2>
             {contactData.body && (
-              <p data-editable="body" className="text-gray-500 mb-8 max-w-xl mx-auto">
-                {contactData.body}
-              </p>
+              <div data-editable="body" className="text-gray-500 mb-8 max-w-xl mx-auto" dangerouslySetInnerHTML={{ __html: contactData.body }} />
             )}
             <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
               {contactData.email && (
