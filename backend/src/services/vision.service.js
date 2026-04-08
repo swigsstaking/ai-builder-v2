@@ -129,7 +129,7 @@ Return ONLY this JSON structure (fill ALL fields from the text above):
   "testimonials": [{"quote": "testimonial text", "author": "author name"}],
   "contactInfo": {"phone": "phone number", "email": "email", "address": "full address"},
   "openingHours": "opening hours if found",
-  "detectedColors": {"primary": "#hex main color", "secondary": "#hex background", "accent": "#hex accent"},
+  "detectedColors": {"primary": "#hex brand/accent color (NOT black or white)", "secondary": "#hex dark background color", "accent": "#hex secondary brand/highlight color (NOT black or white)"},
   "detectedSections": ["hero", "services", "about", "testimonials", "faq", "team", "contact", "gallery", "pricing", "cta"],
   "seo": {"title": "SEO title", "description": "meta description", "keywords": ["keyword1", "keyword2"]}
 }`;

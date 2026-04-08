@@ -98,10 +98,77 @@ export const captureWebsiteScreenshots = async (url, options = {}) => {
       await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
 
       const screenshot = await page.screenshot({ fullPage, type: 'jpeg', quality: 85 });
-      const data = { page: '/', url: baseUrl, screenshot, size: screenshot.length };
+
+      // Extract brand colors from CSS/HTML (instant, no AI needed)
+      const extractedColors = await page.evaluate(() => {
+        const colorCounts = {};
+        const useless = new Set(['#000', '#000000', '#fff', '#ffffff', '#111', '#111111', '#222', '#222222', '#333', '#333333', '#eee', '#eeeeee', '#f5f5f5', '#fefefe', 'rgb(0, 0, 0)', 'rgb(255, 255, 255)', 'rgb(0,0,0)', 'rgb(255,255,255)', 'transparent', 'inherit', 'initial']);
+
+        const normalizeHex = (c) => {
+          if (!c) return null;
+          c = c.trim().toLowerCase();
+          if (useless.has(c)) return null;
+          // Expand 3-char hex
+          if (/^#[0-9a-f]{3}$/i.test(c)) c = '#' + c[1]+c[1]+c[2]+c[2]+c[3]+c[3];
+          if (/^#[0-9a-f]{6}$/i.test(c)) return c;
+          // Convert rgb() to hex
+          const m = c.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+          if (m) {
+            const hex = '#' + [m[1],m[2],m[3]].map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
+            return useless.has(hex) ? null : hex;
+          }
+          return null;
+        };
+
+        // 1. Meta theme-color
+        const metaTheme = document.querySelector('meta[name="theme-color"]')?.content;
+
+        // 2. CSS custom properties from :root
+        const rootStyle = getComputedStyle(document.documentElement);
+        const cssVarNames = ['--primary', '--accent', '--brand', '--color-primary', '--color-accent', '--main-color', '--theme-color', '--brand-color', '--primary-color', '--secondary-color'];
+        const cssVarColors = [];
+        for (const v of cssVarNames) {
+          const val = rootStyle.getPropertyValue(v).trim();
+          if (val) cssVarColors.push(normalizeHex(val));
+        }
+
+        // 3. Computed colors from key elements (buttons, links, nav, headings)
+        const selectors = ['a', 'button', 'nav', 'h1', 'h2', '.btn', '[class*="primary"]', '[class*="accent"]', '[class*="brand"]', 'header'];
+        for (const sel of selectors) {
+          document.querySelectorAll(sel).forEach(el => {
+            const s = getComputedStyle(el);
+            [s.color, s.backgroundColor, s.borderColor].forEach(c => {
+              const hex = normalizeHex(c);
+              if (hex) colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+            });
+          });
+        }
+
+        // 4. Inline style hex colors
+        document.querySelectorAll('[style]').forEach(el => {
+          const matches = (el.getAttribute('style') || '').match(/#[0-9a-fA-F]{3,6}/g);
+          if (matches) matches.forEach(c => {
+            const hex = normalizeHex(c);
+            if (hex) colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+          });
+        });
+
+        // Sort by frequency
+        const sorted = Object.entries(colorCounts).sort((a,b) => b[1] - a[1]).map(e => e[0]);
+
+        // Build result: CSS vars > meta > frequency
+        const validCssVars = cssVarColors.filter(Boolean);
+        const themeHex = normalizeHex(metaTheme);
+        const primary = validCssVars[0] || themeHex || sorted[0] || null;
+        const accent = validCssVars[1] || sorted.find(c => c !== primary) || sorted[1] || null;
+
+        return { primary, accent, all: sorted.slice(0, 8) };
+      });
+
+      const data = { page: '/', url: baseUrl, screenshot, size: screenshot.length, extractedColors };
       screenshots.push(data);
       if (onScreenshot) onScreenshot(data);
-      console.log(`✅ Captured homepage (${(screenshot.length / 1024).toFixed(1)}KB)`);
+      console.log(`✅ Captured homepage (${(screenshot.length / 1024).toFixed(1)}KB)`, extractedColors?.primary ? `colors: ${extractedColors.primary}, ${extractedColors.accent}` : 'no colors');
     } catch (err) {
       console.error(`❌ Failed to capture homepage:`, err.message);
       // Homepage is required — propagate error with clear message

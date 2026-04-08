@@ -115,7 +115,7 @@ export default function BookingCreatePage() {
           }
 
           // Extract colors from migration (only if real colors were detected)
-          if (ec.colors?._detected && ec.colors.primary) {
+          if (ec.colors?.primary) {
             setCustomColors({
               primary: ec.colors.primary,
               secondary: ec.colors.secondary || '#0f172a',

@@ -17,8 +17,8 @@ function normalizeAnalysis(analysisResult) {
   const brief = a.creativeBrief || {};
   const seo = a.seo || info.seo || {};
   const rawColors = info.detectedColors || info.colors || brief.colors || {};
-  // Filter out useless black/white/near-black colors
-  const useless = new Set(['#000000', '#000', '#ffffff', '#fff', '#111111', '#0f0f0f', '#fefefe']);
+  // Filter out useless black/white/near-black/near-white colors
+  const useless = new Set(['#000000', '#000', '#ffffff', '#fff', '#111111', '#0f0f0f', '#fefefe', '#1a1a1a', '#222222', '#333333', '#f5f5f5', '#eeeeee', '#e5e5e5']);
   const ok = (c) => c && !useless.has(c.toLowerCase());
   const colors = {
     primary: ok(rawColors.primary) ? rawColors.primary : (ok(rawColors.mainColor) ? rawColors.mainColor : null),
@@ -175,6 +175,23 @@ export async function runAnalysisPipeline(migrationId) {
       migration.analysisResult = analysisResult.analysis || analysisResult;
       migration.analysisProvider = provider;
       migration.extractedContent = normalizeAnalysis(analysisResult);
+    }
+
+    // Inject CSS-extracted colors from homepage screenshot (more reliable than AI)
+    const homepageData = screenshots.find(s => s.page === '/' || s.page === 'homepage');
+    const cssColors = homepageData?.extractedColors;
+    if (cssColors && (cssColors.primary || cssColors.accent)) {
+      const ec = migration.extractedContent;
+      if (!ec.colors?._detected) {
+        ec.colors = {
+          primary: cssColors.primary || cssColors.accent || ec.colors?.primary || null,
+          secondary: ec.colors?.secondary || null,
+          accent: cssColors.accent || cssColors.primary || ec.colors?.accent || null,
+          _detected: true,
+        };
+        migration.markModified('extractedContent');
+        console.log(`[migration] Injected CSS colors: primary=${ec.colors.primary}, accent=${ec.colors.accent}`);
+      }
     }
 
     // Done
