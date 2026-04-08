@@ -156,13 +156,21 @@ export const captureWebsiteScreenshots = async (url, options = {}) => {
         // Sort by frequency
         const sorted = Object.entries(colorCounts).sort((a,b) => b[1] - a[1]).map(e => e[0]);
 
-        // Build result: CSS vars > meta > frequency
+        // Detect body background to exclude it from "brand" colors
+        const bodyBg = normalizeHex(getComputedStyle(document.body).backgroundColor);
+
+        // Separate: brand colors (not background) vs background
+        const brandColors = sorted.filter(c => c !== bodyBg);
+        const bgColor = bodyBg || sorted.find(c => !brandColors.includes(c));
+
+        // Build result: CSS vars > meta > brand colors by frequency
         const validCssVars = cssVarColors.filter(Boolean);
         const themeHex = normalizeHex(metaTheme);
-        const primary = validCssVars[0] || themeHex || sorted[0] || null;
-        const accent = validCssVars[1] || sorted.find(c => c !== primary) || sorted[1] || null;
+        const primary = validCssVars[0] || themeHex || brandColors[0] || sorted[0] || null;
+        const accent = validCssVars[1] || brandColors.find(c => c !== primary) || brandColors[1] || null;
+        const secondary = bgColor || sorted.find(c => c !== primary && c !== accent) || null;
 
-        return { primary, accent, all: sorted.slice(0, 8) };
+        return { primary, secondary, accent, all: sorted.slice(0, 8) };
       });
 
       const data = { page: '/', url: baseUrl, screenshot, size: screenshot.length, extractedColors };

@@ -182,12 +182,11 @@ export async function runAnalysisPipeline(migrationId) {
     const cssColors = homepageData?.extractedColors;
     if (cssColors && (cssColors.primary || cssColors.accent)) {
       const ec = migration.extractedContent;
-      if (!ec.colors?._detected) {
+      if (!ec.colors?.primary) {
         ec.colors = {
-          primary: cssColors.primary || cssColors.accent || ec.colors?.primary || null,
-          secondary: ec.colors?.secondary || null,
-          accent: cssColors.accent || cssColors.primary || ec.colors?.accent || null,
-          _detected: true,
+          primary: cssColors.primary || cssColors.accent || null,
+          secondary: cssColors.secondary || ec.colors?.secondary || null,
+          accent: cssColors.accent || cssColors.primary || null,
         };
         migration.markModified('extractedContent');
         console.log(`[migration] Injected CSS colors: primary=${ec.colors.primary}, accent=${ec.colors.accent}`);
