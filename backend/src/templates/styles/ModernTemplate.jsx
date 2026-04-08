@@ -593,15 +593,24 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
           style={{ background: `linear-gradient(135deg, ${secondary} 0%, ${primary}90 100%)` }}
         >
           <div className="max-w-4xl mx-auto text-center">
-            {heroPractitionerData.photoMediaId && (
-              <div className="mb-6 flex justify-center">
+            <div className="mb-6 flex justify-center">
+              {heroPractitionerData.photoMediaId ? (
                 <img
                   src={`/api/media/${heroPractitionerData.photoMediaId}/file`}
                   alt={heroPractitionerData.name || 'Praticien'}
                   className="w-32 h-32 rounded-full object-cover border-4 border-white/20 shadow-xl"
                 />
-              </div>
-            )}
+              ) : (
+                <div
+                  className="w-32 h-32 rounded-full border-4 border-white/20 shadow-xl flex items-center justify-center"
+                  style={{ backgroundColor: `${primary}60` }}
+                >
+                  <svg className="w-16 h-16 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  </svg>
+                </div>
+              )}
+            </div>
             <h1
               data-editable="name"
               className={`font-bold text-white ${isMobile ? 'text-3xl' : 'text-5xl'} mb-3`}
@@ -611,7 +620,7 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
             {heroPractitionerData.specialty && (
               <p
                 className={`font-medium mb-4 ${isMobile ? 'text-lg' : 'text-xl'}`}
-                style={{ color: `${accent}` }}
+                style={{ color: 'rgba(255,255,255,0.85)' }}
               >
                 {heroPractitionerData.specialty}
               </p>

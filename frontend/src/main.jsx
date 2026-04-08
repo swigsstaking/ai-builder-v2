@@ -13,7 +13,7 @@ const GOOGLE_CLIENT_ID = '189258755312-e5qvv3oeq0d3o9q9180o5htabjh1u9mp.apps.goo
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID} scriptSrc="https://accounts.google.com/gsi/client?hl=fr">
       <BrowserRouter>
         <App />
         <Toaster position="top-right" toastOptions={{ duration: 3000 }} />

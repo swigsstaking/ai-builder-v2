@@ -443,15 +443,24 @@ const MinimalTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
           className={`${isMobile ? 'py-16 px-6' : 'py-24 px-6'} bg-white`}
         >
           <div className="max-w-3xl mx-auto text-center">
-            {heroPractitionerData.photoMediaId && (
-              <div className="mb-8 flex justify-center">
+            <div className="mb-8 flex justify-center">
+              {heroPractitionerData.photoMediaId ? (
                 <img
                   src={`/api/media/${heroPractitionerData.photoMediaId}/file`}
                   alt={heroPractitionerData.name || 'Praticien'}
                   className="w-28 h-28 rounded-full object-cover"
                 />
-              </div>
-            )}
+              ) : (
+                <div
+                  className="w-28 h-28 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: `${primary}15` }}
+                >
+                  <svg className="w-14 h-14" style={{ color: `${primary}40` }} fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  </svg>
+                </div>
+              )}
+            </div>
             <h1
               data-editable="name"
               className={`font-semibold leading-tight mb-3 ${isMobile ? 'text-3xl' : 'text-4xl'}`}
@@ -460,7 +469,7 @@ const MinimalTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
               {heroPractitionerData.name || 'Votre praticien'}
             </h1>
             {heroPractitionerData.specialty && (
-              <p className="text-sm font-medium mb-4" style={{ color: primary }}>
+              <p className="text-sm font-medium mb-4" style={{ color: 'rgba(255,255,255,0.85)' }}>
                 {heroPractitionerData.specialty}
               </p>
             )}

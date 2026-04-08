@@ -637,8 +637,8 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
           </div>
 
           <div className="max-w-4xl mx-auto text-center relative z-10">
-            {heroPractitionerData.photoMediaId && (
-              <div className="mb-8 flex justify-center">
+            <div className="mb-8 flex justify-center">
+              {heroPractitionerData.photoMediaId ? (
                 <div
                   className="p-1.5 rounded-full rotate-3"
                   style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}
@@ -649,8 +649,17 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
                     className="w-36 h-36 rounded-full object-cover border-4 border-white/20 shadow-2xl"
                   />
                 </div>
-              </div>
-            )}
+              ) : (
+                <div
+                  className="w-36 h-36 rounded-full rotate-3 border-4 border-white/20 shadow-2xl flex items-center justify-center"
+                  style={{ background: `linear-gradient(135deg, ${primary}60, ${accent}60)` }}
+                >
+                  <svg className="w-16 h-16 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  </svg>
+                </div>
+              )}
+            </div>
             <h1
               data-editable="name"
               className={`font-bold text-white ${isMobile ? 'text-3xl' : 'text-5xl lg:text-6xl'} mb-4 leading-tight`}
@@ -660,11 +669,7 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
             {heroPractitionerData.specialty && (
               <p
                 className={`font-semibold mb-4 ${isMobile ? 'text-lg' : 'text-2xl'}`}
-                style={{
-                  background: `linear-gradient(135deg, ${accent}, ${primary})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
+                style={{ color: 'rgba(255,255,255,0.85)' }}
               >
                 {heroPractitionerData.specialty}
               </p>

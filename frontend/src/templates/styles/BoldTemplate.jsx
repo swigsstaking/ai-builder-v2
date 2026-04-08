@@ -578,16 +578,25 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
             style={{ backgroundColor: primary }}
           />
           <div className="max-w-4xl mx-auto text-center relative z-10">
-            {heroPractitionerData.photoMediaId && (
-              <div className="mb-8 flex justify-center">
+            <div className="mb-8 flex justify-center">
+              {heroPractitionerData.photoMediaId ? (
                 <img
-                  src={`/api/media/${heroPractitionerData.photoMediaId}`}
+                  src={`/api/media/${heroPractitionerData.photoMediaId}/file`}
                   alt={heroPractitionerData.name || 'Praticien'}
                   className="w-36 h-36 object-cover"
                   style={{ border: `4px solid ${primary}` }}
                 />
-              </div>
-            )}
+              ) : (
+                <div
+                  className="w-36 h-36 border-4 flex items-center justify-center"
+                  style={{ borderColor: primary, backgroundColor: `${primary}60` }}
+                >
+                  <svg className="w-16 h-16 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  </svg>
+                </div>
+              )}
+            </div>
             <h1
               data-editable="name"
               className={`font-black text-white uppercase leading-none mb-4 ${isMobile ? 'text-4xl' : 'text-6xl lg:text-7xl'}`}
@@ -599,7 +608,7 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
               <p
                 data-editable="specialty"
                 className={`font-bold uppercase tracking-wider mb-6 ${isMobile ? 'text-lg' : 'text-xl'}`}
-                style={{ color: primary }}
+                style={{ color: 'rgba(255,255,255,0.85)' }}
               >
                 {heroPractitionerData.specialty}
               </p>

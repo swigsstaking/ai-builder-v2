@@ -4,7 +4,7 @@ import { ChevronUp, Upload, X, Calendar, Palette, Check, Globe, Loader } from 'l
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import useSiteStore from '../stores/siteStore';
-import { pagesApi, aiApi, buildApi, mediaApi, migrationApi } from '../services/api';
+import { pagesApi, aiApi, buildApi, mediaApi, migrationApi, sitesApi } from '../services/api';
 import { mapBookingAiContentToSections, distributeImagesToSections } from '../lib/aiPageBuilder';
 import CreateProgressModal from '../components/CreateProgressModal';
 import DesignStyleSelector, { DESIGN_STYLES } from '../components/DesignStyleSelector';
@@ -47,6 +47,7 @@ export default function BookingCreatePage() {
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [description, setDescription] = useState('');
+  const [googleMapsUrl, setGoogleMapsUrl] = useState('');
   const [showOptional, setShowOptional] = useState(false);
 
   // Photo
@@ -170,6 +171,7 @@ export default function BookingCreatePage() {
         email: email.trim() || undefined,
         address: address.trim() || undefined,
         description: description.trim() || undefined,
+        googleMapsUrl: googleMapsUrl.trim() || undefined,
         tone: 'professionnel et chaleureux',
       },
       design: {
@@ -189,6 +191,7 @@ export default function BookingCreatePage() {
       { key: 'creating', label: 'Création du site', icon: 'FolderPlus' },
     ];
     if (photo) steps.push({ key: 'photo', label: 'Upload de la photo', icon: 'ImageIcon' });
+    if (googleMapsUrl.trim()) steps.push({ key: 'reviews', label: 'Import des avis Google', icon: 'Star' });
     steps.push({ key: 'page', label: 'Création de la page booking', icon: 'FileText' });
     steps.push({ key: 'ai', label: 'IA — Génération du contenu', icon: 'Sparkles' });
     steps.push({ key: 'seo', label: 'Optimisation SEO', icon: 'Search' });
@@ -220,6 +223,14 @@ export default function BookingCreatePage() {
           const { media } = await mediaApi.upload(site._id, fd);
           uploadedMediaIds.push(media._id);
         } catch (err) { console.error('Photo upload error:', err); }
+      }
+
+      // 2b. Import Google Reviews
+      if (googleMapsUrl.trim()) {
+        advance('reviews');
+        try {
+          await sitesApi.fetchGoogleReviews(site._id);
+        } catch (err) { console.warn('[GoogleReviews] Import failed:', err.message); }
       }
 
       // 3. Create booking page
@@ -363,7 +374,7 @@ export default function BookingCreatePage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">Ville</label>
-              <Input value={city} onChange={e => setCity(e.target.value)} placeholder="Toulouse" />
+              <Input value={city} onChange={e => setCity(e.target.value)} placeholder="Lausanne" />
             </div>
           </div>
         </Card>
@@ -451,6 +462,14 @@ export default function BookingCreatePage() {
                 className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.04] text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none"
                 rows={3}
               />
+              <div>
+                <Input
+                  value={googleMapsUrl}
+                  onChange={e => setGoogleMapsUrl(e.target.value)}
+                  placeholder="https://maps.google.com/... ou https://g.page/..."
+                />
+                <p className="text-xs text-slate-600 mt-1">Lien Google Maps — pour afficher la carte précise et importer vos avis Google</p>
+              </div>
             </div>
           )}
         </Card>
