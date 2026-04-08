@@ -180,7 +180,6 @@ export function mapBookingAiContentToSections(sections, content) {
       case 'testimonials': {
         let items = content.testimonials?.items || (Array.isArray(content.testimonials) ? content.testimonials : null);
         if (items) {
-          // Normalize AI fields (name/text/location) → template fields (author/quote/role)
           items = items.map(t => ({
             author: t.author || t.name || '',
             quote: t.quote || t.text || '',
@@ -191,6 +190,11 @@ export function mapBookingAiContentToSections(sections, content) {
         }
         break;
       }
+      case 'google-reviews':
+        if (content.googleReviews) {
+          sData.data = { ...s.data, ...content.googleReviews };
+        }
+        break;
       case 'faq':
         if (content.faq?.items) sData.data = { ...s.data, items: content.faq.items };
         else if (Array.isArray(content.faq)) sData.data = { ...s.data, items: content.faq };

@@ -60,12 +60,10 @@ function TemplateSwitcher({ currentStyle, onChangeStyle, disabled }) {
                     isActive ? 'bg-purple-500/10 text-white' : 'text-slate-300 hover:bg-white/[0.04]'
                   }`}
                 >
-                  {/* Color dots */}
-                  <div className="flex gap-1 shrink-0">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: style.colors.primary }} />
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: style.colors.secondary }} />
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: style.colors.accent }} />
-                  </div>
+                  {/* Font indicator */}
+                  <span className="text-[10px] text-slate-500 px-1.5 py-0.5 rounded bg-white/[0.04] shrink-0 font-mono">
+                    {style.fonts.heading.split(' ')[0]}
+                  </span>
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-medium">{style.name}</span>
                     <span className="text-[10px] text-slate-500 ml-1.5">{style.description}</span>
