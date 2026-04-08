@@ -12,6 +12,12 @@ const useAuthStore = create((set) => ({
     set({ token, user, loading: false });
   },
 
+  googleLogin: async (idToken) => {
+    const { token, user } = await authApi.googleLogin({ idToken });
+    localStorage.setItem('aibuilder_token', token);
+    set({ token, user, loading: false });
+  },
+
   logout: () => {
     localStorage.removeItem('aibuilder_token');
     set({ user: null, token: null });

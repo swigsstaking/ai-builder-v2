@@ -4,8 +4,11 @@ import bcrypt from 'bcryptjs';
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   name: { type: String, required: true, trim: true },
-  password: { type: String, required: true, select: false },
+  password: { type: String, select: false },
   passwordHash: { type: String, select: false },
+  googleId: { type: String, sparse: true, unique: true },
+  avatar: { type: String },
+  authMethod: { type: String, enum: ['local', 'google'], default: 'local' },
   role: { type: String, enum: ['admin', 'superadmin', 'editor', 'client'], default: 'client' },
   assignedSites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Site' }],
   isActive: { type: Boolean, default: true },

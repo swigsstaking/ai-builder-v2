@@ -17,6 +17,7 @@ const UserManagementPage = lazy(() => import('./pages/UserManagementPage'));
 const MigrationWizardPage = lazy(() => import('./pages/MigrationWizardPage'));
 const SiteOverviewPage = lazy(() => import('./pages/SiteOverviewPage'));
 const TemplateTestPage = lazy(() => import('./pages/TemplateTestPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 
 function Loader() {
   return (
@@ -64,6 +65,7 @@ export default function App() {
         {/* Public pages */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/migrate" element={<MigrationWizardPage />} />
         <Route path="/templates" element={<TemplateTestPage />} />
 
