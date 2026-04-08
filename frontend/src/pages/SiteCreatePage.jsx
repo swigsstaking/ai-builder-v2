@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Globe, PenTool, Upload, X, ChevronDown, ChevronUp, Palette, Check, Pipette } from 'lucide-react';
+import { Sparkles, Globe, PenTool, Upload, X, ChevronDown, ChevronUp, Palette, Check, Pipette, Calendar } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import useSiteStore from '../stores/siteStore';
@@ -309,7 +309,7 @@ export default function SiteCreatePage() {
           <h1 className="text-2xl font-bold text-white mb-2">Nouveau site</h1>
           <p className="text-slate-500 mb-8">Comment souhaitez-vous créer votre site ?</p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card variant="interactive" className="p-6" onClick={() => setMode('scratch')}>
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/15 to-blue-500/15 border border-purple-500/15 flex items-center justify-center mb-4">
                 <PenTool size={24} className="text-purple-400" />
@@ -324,6 +324,14 @@ export default function SiteCreatePage() {
               </div>
               <h3 className="text-lg font-semibold text-white mb-1">Importer un site</h3>
               <p className="text-sm text-slate-400">Entrez l'URL d'un site existant pour migrer le contenu</p>
+            </Card>
+
+            <Card variant="interactive" className="p-6" onClick={() => navigate('/dashboard/new-booking')}>
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center mb-4">
+                <Calendar size={24} className="text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-1">Page de réservation</h3>
+              <p className="text-sm text-slate-400">Créez une page pour permettre à vos clients de réserver en ligne</p>
             </Card>
           </div>
         </div>

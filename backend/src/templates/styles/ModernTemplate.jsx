@@ -46,6 +46,10 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
   const ctaData = getSectionData(sections, 'cta', {});
   const teamData = getSectionData(sections, 'team', { members: [] });
 
+  const heroPractitionerData = getSectionData(sections, 'hero-practitioner', {});
+  const servicesBookingData = getSectionData(sections, 'services-booking', { services: [] });
+  const bookingWidgetData = getSectionData(sections, 'booking-widget', {});
+
   const showHero = isSectionVisible(sections, 'hero');
   const showServices = isSectionVisible(sections, 'services');
   const showAbout = isSectionVisible(sections, 'about');
@@ -56,12 +60,19 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
   const showCta = isSectionVisible(sections, 'cta');
   const showTeam = isSectionVisible(sections, 'team');
 
+  const showHeroPractitioner = isSectionVisible(sections, 'hero-practitioner');
+  const showServicesBooking = isSectionVisible(sections, 'services-booking');
+  const showBookingWidget = isSectionVisible(sections, 'booking-widget');
+
+  const isBookingPage = showHeroPractitioner || showBookingWidget;
+
   const services = servicesData.services || [];
   const testimonialItems = testimonialsData.items || [];
   const faqItems = faqData.items || [];
   const googleTestimonials = googleReviewsData.testimonials || [];
   const teamMembers = teamData.members || [];
   const bulletPoints = heroData.bulletPoints || [];
+  const bookingServices = servicesBookingData.services || [];
 
   const iconMap = { shield: Shield, zap: Zap, clock: Clock, users: Users, star: Star };
   const getIcon = (name) => iconMap[name?.toLowerCase()] || Star;
@@ -571,10 +582,160 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
           </div>
         </section>
       ),
+
+    'hero-practitioner': () =>
+      showHeroPractitioner && (
+        <section
+          key="hero-practitioner"
+          id="hero-practitioner"
+          data-section="hero-practitioner"
+          className={`${isMobile ? 'py-16 px-6' : 'py-24 px-6'} relative overflow-hidden`}
+          style={{ background: `linear-gradient(135deg, ${secondary} 0%, ${primary}90 100%)` }}
+        >
+          <div className="max-w-4xl mx-auto text-center">
+            {heroPractitionerData.photoMediaId && (
+              <div className="mb-6 flex justify-center">
+                <img
+                  src={`/api/media/${heroPractitionerData.photoMediaId}/file`}
+                  alt={heroPractitionerData.name || 'Praticien'}
+                  className="w-32 h-32 rounded-full object-cover border-4 border-white/20 shadow-xl"
+                />
+              </div>
+            )}
+            <h1
+              data-editable="name"
+              className={`font-bold text-white ${isMobile ? 'text-3xl' : 'text-5xl'} mb-3`}
+            >
+              {heroPractitionerData.name || 'Votre praticien'}
+            </h1>
+            {heroPractitionerData.specialty && (
+              <p
+                className={`font-medium mb-4 ${isMobile ? 'text-lg' : 'text-xl'}`}
+                style={{ color: `${accent}` }}
+              >
+                {heroPractitionerData.specialty}
+              </p>
+            )}
+            {heroPractitionerData.tagline && (
+              <p className={`text-white/70 max-w-2xl mx-auto mb-8 ${isMobile ? 'text-base' : 'text-lg'}`}>
+                {heroPractitionerData.tagline}
+              </p>
+            )}
+            {heroPractitionerData.ctaText && (
+              <button
+                className={`px-8 py-3.5 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transition-all ${isMobile ? 'text-base' : 'text-lg'}`}
+                style={{ backgroundColor: accent }}
+                onClick={() => handleNavigate(heroPractitionerData.ctaUrl?.replace('#', '') || 'booking')}
+              >
+                {heroPractitionerData.ctaText}
+              </button>
+            )}
+          </div>
+        </section>
+      ),
+
+    'services-booking': () =>
+      showServicesBooking && bookingServices.length > 0 && (
+        <section
+          key="services-booking"
+          id="services-booking"
+          data-section="services-booking"
+          className={`${isMobile ? 'py-16 px-6' : 'py-20 px-6'}`}
+        >
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2
+                data-editable="title"
+                className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}
+                style={{ color: secondary }}
+              >
+                {servicesBookingData.title || 'Nos prestations'}
+              </h2>
+              {servicesBookingData.subtitle && (
+                <p className="text-gray-500 mt-3 max-w-xl mx-auto">{servicesBookingData.subtitle}</p>
+              )}
+            </div>
+            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {bookingServices.map((svc, idx) => (
+                <div
+                  key={idx}
+                  className="p-5 rounded-xl border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all flex items-center justify-between gap-4"
+                >
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold" style={{ color: secondary }}>{svc.name}</h3>
+                    {svc.description && <p className="text-gray-500 text-sm mt-1 line-clamp-2">{svc.description}</p>}
+                    <div className="flex items-center gap-3 mt-2">
+                      {svc.duration && (
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Clock className="w-3.5 h-3.5" /> {svc.duration}
+                        </span>
+                      )}
+                      {svc.price && (
+                        <span className="text-sm font-semibold" style={{ color: primary }}>{svc.price}</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    className="px-4 py-2 text-sm font-medium rounded-lg text-white flex-shrink-0"
+                    style={{ backgroundColor: primary }}
+                    onClick={() => handleNavigate('booking')}
+                  >
+                    Réserver
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ),
+
+    'booking-widget': () =>
+      showBookingWidget && (
+        <section
+          key="booking-widget"
+          id="booking"
+          data-section="booking-widget"
+          className={`${isMobile ? 'py-16 px-6' : 'py-20 px-6'}`}
+          style={{ backgroundColor: `${primary}08` }}
+        >
+          <div className="max-w-4xl mx-auto">
+            {bookingWidgetData.title && (
+              <h2
+                data-editable="title"
+                className={`font-bold text-center mb-8 ${isMobile ? 'text-2xl' : 'text-3xl'}`}
+                style={{ color: secondary }}
+              >
+                {bookingWidgetData.title}
+              </h2>
+            )}
+            {bookingWidgetData.calendarSlug ? (
+              <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+                <iframe
+                  src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}`}
+                  title="Réservation en ligne"
+                  className="w-full border-0"
+                  style={{ height: isMobile ? '500px' : '650px' }}
+                  allow="payment"
+                />
+              </div>
+            ) : (
+              <div
+                className="rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center"
+                style={{ height: '300px' }}
+              >
+                <p className="text-gray-400 text-center">
+                  Widget de réservation<br />
+                  <span className="text-sm">Configurez le slug Calendar dans l'éditeur</span>
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      ),
   };
 
   // Default section order
-  const defaultOrder = ['hero', 'services', 'about', 'testimonials', 'google-reviews', 'faq', 'team', 'cta', 'contact'];
+  const defaultOrder = ['hero', 'hero-practitioner', 'services', 'services-booking', 'about', 'testimonials', 'google-reviews', 'faq', 'team', 'cta', 'booking-widget', 'contact'];
 
   // Render sections in order from the sections array, falling back to default order
   const visibleSections = getVisibleSections(sections);
@@ -612,38 +773,69 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
             <div className="flex items-center gap-6">
               <span
                 className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
-                onClick={() => handleNavigate('hero')}
+                onClick={() => handleNavigate(isBookingPage ? 'hero-practitioner' : 'hero')}
               >
                 Accueil
               </span>
-              {showServices && services.length > 0 && (
-                <span
-                  className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
-                  onClick={() => handleNavigate('services')}
-                >
-                  Services
-                </span>
+              {isBookingPage ? (
+                <>
+                  {showServicesBooking && bookingServices.length > 0 && (
+                    <span
+                      className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
+                      onClick={() => handleNavigate('services-booking')}
+                    >
+                      Prestations
+                    </span>
+                  )}
+                  {showAbout && aboutData.body && (
+                    <span
+                      className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
+                      onClick={() => handleNavigate('about')}
+                    >
+                      À propos
+                    </span>
+                  )}
+                  {showBookingWidget && (
+                    <span
+                      className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
+                      onClick={() => handleNavigate('booking')}
+                    >
+                      Réserver
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  {showServices && services.length > 0 && (
+                    <span
+                      className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
+                      onClick={() => handleNavigate('services')}
+                    >
+                      Services
+                    </span>
+                  )}
+                  {showAbout && aboutData.body && (
+                    <span
+                      className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
+                      onClick={() => handleNavigate('about')}
+                    >
+                      À propos
+                    </span>
+                  )}
+                  <span
+                    className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
+                    onClick={() => handleNavigate('contact')}
+                  >
+                    Contact
+                  </span>
+                </>
               )}
-              {showAbout && aboutData.body && (
-                <span
-                  className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
-                  onClick={() => handleNavigate('about')}
-                >
-                  À propos
-                </span>
-              )}
-              <span
-                className="text-sm text-gray-500 hover:text-gray-900 cursor-pointer transition-colors"
-                onClick={() => handleNavigate('contact')}
-              >
-                Contact
-              </span>
               <button
                 className="px-5 py-2.5 text-sm font-medium text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
                 style={{ backgroundColor: primary }}
-                onClick={() => handleNavigate('contact')}
+                onClick={() => handleNavigate(isBookingPage ? 'booking' : 'contact')}
               >
-                Nous contacter
+                {isBookingPage ? 'Prendre rendez-vous' : 'Nous contacter'}
               </button>
             </div>
           )}

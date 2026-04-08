@@ -162,6 +162,51 @@ export function mapCityAiContentToSections(sections, content) {
 }
 
 /**
+ * Map AI-generated booking page content to sections.
+ */
+export function mapBookingAiContentToSections(sections, content) {
+  return sections.map(s => {
+    const sData = { ...s };
+    switch (s.type) {
+      case 'hero-practitioner':
+        if (content.heroPractitioner) sData.data = { ...s.data, ...content.heroPractitioner };
+        break;
+      case 'services-booking':
+        if (content.servicesBooking) sData.data = { ...s.data, ...content.servicesBooking };
+        break;
+      case 'about':
+        if (content.about) sData.data = { ...s.data, ...content.about };
+        break;
+      case 'testimonials': {
+        let items = content.testimonials?.items || (Array.isArray(content.testimonials) ? content.testimonials : null);
+        if (items) {
+          // Normalize AI fields (name/text/location) → template fields (author/quote/role)
+          items = items.map(t => ({
+            author: t.author || t.name || '',
+            quote: t.quote || t.text || '',
+            role: t.role || t.location || '',
+            rating: t.rating,
+          }));
+          sData.data = { ...s.data, items };
+        }
+        break;
+      }
+      case 'faq':
+        if (content.faq?.items) sData.data = { ...s.data, items: content.faq.items };
+        else if (Array.isArray(content.faq)) sData.data = { ...s.data, items: content.faq };
+        break;
+      case 'contact':
+        if (content.contact) sData.data = { ...s.data, ...content.contact, address: s.data.address, phone: s.data.phone, email: s.data.email };
+        break;
+      case 'booking-widget':
+        // Keep calendarSlug from DB, don't override with AI
+        break;
+    }
+    return sData;
+  });
+}
+
+/**
  * Distribute images cyclically across sections.
  * @param {Array} sections - Page sections
  * @param {Array} mediaIds - Array of media ObjectId strings
@@ -179,6 +224,9 @@ export function distributeImagesToSections(sections, mediaIds, pageIndex = 0) {
     const sData = { ...s };
     if (s.type === 'hero' && !s.data.backgroundMediaId) {
       sData.data = { ...s.data, backgroundMediaId: next() };
+    }
+    if (s.type === 'hero-practitioner' && !s.data.photoMediaId) {
+      sData.data = { ...s.data, photoMediaId: next() };
     }
     if ((s.type === 'about' || s.type === 'description' || s.type === 'city-about') && !s.data.imageMediaId) {
       sData.data = { ...s.data, imageMediaId: next() };

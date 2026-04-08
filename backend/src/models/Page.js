@@ -8,6 +8,8 @@ const sectionSchema = new mongoose.Schema({
       // Universal 9 block types
       'hero', 'services', 'about', 'testimonials', 'faq',
       'google-reviews', 'contact', 'cta', 'team',
+      // Booking page types
+      'hero-practitioner', 'services-booking', 'booking-widget',
       // Legacy types (backward compat)
       'text-highlight', 'description', 'why-us', 'cta-banner',
       'services-grid', 'guarantee', 'map',
@@ -23,7 +25,8 @@ const pageSchema = new mongoose.Schema({
   siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true, index: true },
   title: { type: String, required: true, trim: true },
   slug: { type: String, required: true, trim: true },
-  type: { type: String, enum: ['homepage', 'subpage', 'contact', 'legal', 'city'], required: true },
+  type: { type: String, enum: ['homepage', 'subpage', 'contact', 'legal', 'city', 'booking'], required: true },
+  calendarSlug: { type: String, trim: true, default: '' },
   isMainHomepage: { type: Boolean, default: false },
   cityTarget: { type: String, trim: true, default: '' },
 

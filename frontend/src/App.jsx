@@ -18,6 +18,10 @@ const MigrationWizardPage = lazy(() => import('./pages/MigrationWizardPage'));
 const SiteOverviewPage = lazy(() => import('./pages/SiteOverviewPage'));
 const TemplateTestPage = lazy(() => import('./pages/TemplateTestPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const BookingCreatePage = lazy(() => import('./pages/BookingCreatePage'));
+const BookingServicesPage = lazy(() => import('./pages/BookingServicesPage'));
+const BookingSchedulePage = lazy(() => import('./pages/BookingSchedulePage'));
+const BookingAppointmentsPage = lazy(() => import('./pages/BookingAppointmentsPage'));
 
 function Loader() {
   return (
@@ -40,6 +44,12 @@ function AdminRoute({ children }) {
   return children;
 }
 
+function SuperAdminRoute({ children }) {
+  const { user } = useAuthStore();
+  if (user?.role !== 'superadmin') return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
 export default function App() {
   const { accessToken, fetchUser, loading, user, ssoCallback } = useAuthStore();
   const location = useLocation();
@@ -56,6 +66,7 @@ export default function App() {
         .then(() => navigate('/dashboard', { replace: true }))
         .catch((err) => {
           console.error('SSO callback failed:', err);
+          useAuthStore.setState({ loading: false });
           navigate('/login', { replace: true });
         });
       return;
@@ -89,7 +100,8 @@ export default function App() {
         <Route path="/dashboard/sites/:siteId/pages/:pageId" element={<ProtectedRoute><PageEditorPage /></ProtectedRoute>} />
 
         {/* Full-screen create page (no sidebar) */}
-        <Route path="/dashboard/new" element={<ProtectedRoute><AdminRoute><SiteCreatePage /></AdminRoute></ProtectedRoute>} />
+        <Route path="/dashboard/new" element={<ProtectedRoute><SiteCreatePage /></ProtectedRoute>} />
+        <Route path="/dashboard/new-booking" element={<ProtectedRoute><BookingCreatePage /></ProtectedRoute>} />
 
         {/* Dashboard (protected, with sidebar layout) */}
         <Route path="/dashboard" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
@@ -99,7 +111,10 @@ export default function App() {
           <Route path="sites/:siteId/pages" element={<PagesListPage />} />
           <Route path="sites/:siteId/media" element={<MediaLibraryPage />} />
           <Route path="sites/:siteId/seo" element={<SeoPage />} />
-          <Route path="users" element={<AdminRoute><UserManagementPage /></AdminRoute>} />
+          <Route path="sites/:siteId/booking/services" element={<BookingServicesPage />} />
+          <Route path="sites/:siteId/booking/schedule" element={<BookingSchedulePage />} />
+          <Route path="sites/:siteId/booking/appointments" element={<BookingAppointmentsPage />} />
+          <Route path="users" element={<SuperAdminRoute><UserManagementPage /></SuperAdminRoute>} />
         </Route>
 
         {/* Fallback */}

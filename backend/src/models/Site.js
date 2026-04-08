@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const siteSchema = new mongoose.Schema({
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
   name: { type: String, required: true, trim: true },
   slug: { type: String, required: true, unique: true, lowercase: true },
   domain: { type: String, unique: true, sparse: true, trim: true },

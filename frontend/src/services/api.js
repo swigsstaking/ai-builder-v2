@@ -122,6 +122,27 @@ export const aiApi = {
   rewrite: (data) => api.post('/ai/rewrite', data),
   generateAlt: (data) => api.post('/ai/generate-alt', data),
   generateCityPage: (data) => api.post('/ai/generate-city-page', data),
+  generateBookingPage: (data) => api.post('/ai/generate-booking-page', data),
+};
+
+export const calendarApi = {
+  // Services
+  getServices: () => api.get('/calendar/services'),
+  createService: (data) => api.post('/calendar/services', data),
+  updateService: (id, data) => api.put(`/calendar/services/${id}`, data),
+  deleteService: (id) => api.delete(`/calendar/services/${id}`),
+  reorderServices: (data) => api.patch('/calendar/services/reorder', data),
+  // Booking Profile
+  getBookingProfile: () => api.get('/calendar/booking-profile'),
+  createBookingProfile: (data) => api.post('/calendar/booking-profile', data),
+  updateBookingProfile: (data) => api.put('/calendar/booking-profile', data),
+  checkSlug: (slug) => api.get(`/calendar/booking-profile/check-slug/${slug}`),
+  // Preferences (working hours)
+  updatePreferences: (data) => api.patch('/calendar/preferences', data),
+  // Bookings
+  getBookings: () => api.get('/calendar/bookings'),
+  cancelBooking: (eventId) => api.patch(`/calendar/bookings/${eventId}/cancel`),
+  completeBooking: (eventId) => api.patch(`/calendar/bookings/${eventId}/complete`),
 };
 
 export const migrationApi = {

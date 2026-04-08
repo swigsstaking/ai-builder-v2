@@ -80,11 +80,9 @@ export default function DashboardPage() {
             <Badge variant="purple" size="sm">{sites.length}</Badge>
           )}
         </div>
-        {isAdmin && (
-          <Button icon={Plus} onClick={() => navigate('/dashboard/new')}>
-            Nouveau site
-          </Button>
-        )}
+        <Button icon={Plus} onClick={() => navigate('/dashboard/new')}>
+          Nouveau site
+        </Button>
       </div>
 
       {/* Search */}
@@ -184,38 +182,32 @@ export default function DashboardPage() {
                   >
                     Aperçu
                   </Button>
-                  {isAdmin && (
-                    <div onClick={e => e.stopPropagation()}>
-                      <PublishButton siteId={site._id} status={site.status} domain={site.domain} compact />
-                    </div>
-                  )}
+                  <div onClick={e => e.stopPropagation()}>
+                    <PublishButton siteId={site._id} status={site.status} domain={site.domain} compact />
+                  </div>
                 </div>
               </div>
 
               {/* Footer actions */}
               <div className="px-4 py-2.5 flex items-center justify-between border-t border-white/[0.05] bg-white/[0.02]">
                 <div className="flex gap-2">
-                  {isAdmin && (
-                    <button onClick={(e) => { e.stopPropagation(); handleDuplicate(site._id); }} className="text-slate-500 hover:text-slate-300 transition-colors" title="Dupliquer">
-                      <Copy size={15} />
-                    </button>
-                  )}
+                  <button onClick={(e) => { e.stopPropagation(); handleDuplicate(site._id); }} className="text-slate-500 hover:text-slate-300 transition-colors" title="Dupliquer">
+                    <Copy size={15} />
+                  </button>
                   {site.status === 'published' && site.domain && (
                     <a href={`https://${site.domain}`} target="_blank" rel="noopener" className="text-slate-500 hover:text-purple-400 transition-colors" title="Voir en ligne" onClick={e => e.stopPropagation()}>
                       <ExternalLink size={15} />
                     </a>
                   )}
-                  {isAdmin && site.status === 'published' && (
+                  {site.status === 'published' && (
                     <button onClick={(e) => { e.stopPropagation(); setUnpublishModal(site); }} className="text-slate-500 hover:text-orange-400 transition-colors" title="Dépublier">
                       <CloudOff size={15} />
                     </button>
                   )}
                 </div>
-                {isAdmin && (
-                  <button onClick={(e) => { e.stopPropagation(); setDeleteModal(site); }} className="text-slate-500 hover:text-red-400 transition-colors" title="Supprimer">
-                    <Trash2 size={15} />
-                  </button>
-                )}
+                <button onClick={(e) => { e.stopPropagation(); setDeleteModal(site); }} className="text-slate-500 hover:text-red-400 transition-colors" title="Supprimer">
+                  <Trash2 size={15} />
+                </button>
               </div>
             </Card>
           ))}

@@ -1,8 +1,9 @@
 import { Outlet, NavLink, useParams, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Settings, FileText, Image, Search, LogOut, Plus, Sparkles, ArrowLeft, Users, BarChart3, Home } from 'lucide-react';
+import { LayoutDashboard, Settings, FileText, Image, Search, LogOut, Plus, Sparkles, ArrowLeft, Users, BarChart3, Home, Calendar, Briefcase, Clock } from 'lucide-react';
 import useAuthStore, { useIsAdmin } from '../stores/authStore';
 import useSiteStore from '../stores/siteStore';
-import { useEffect } from 'react';
+import { pagesApi } from '../services/api';
+import { useState, useEffect } from 'react';
 
 export default function Layout() {
   const { siteId } = useParams();
@@ -11,8 +12,17 @@ export default function Layout() {
   const { currentSite, fetchSite } = useSiteStore();
   const navigate = useNavigate();
 
+  const [hasBookingPage, setHasBookingPage] = useState(false);
+
   useEffect(() => {
-    if (siteId) fetchSite(siteId);
+    if (siteId) {
+      fetchSite(siteId);
+      pagesApi.getBySite(siteId).then(res => {
+        setHasBookingPage((res.pages || []).some(p => p.type === 'booking'));
+      }).catch(() => {});
+    } else {
+      setHasBookingPage(false);
+    }
   }, [siteId]);
 
   const handleLogout = () => {
@@ -64,6 +74,17 @@ export default function Layout() {
                   <NavLink to={`/dashboard/sites/${siteId}/media`} className={linkClass}><Image size={18} /> Médias</NavLink>
                   <NavLink to={`/dashboard/sites/${siteId}/seo`} className={linkClass}><Search size={18} /> SEO</NavLink>
                   <NavLink to={`/dashboard/sites/${siteId}/settings`} className={linkClass}><Settings size={18} /> Paramètres</NavLink>
+
+                  {hasBookingPage && (
+                    <>
+                      <div className="pt-4 pb-2">
+                        <p className="px-4 text-[10px] font-semibold text-emerald-500/70 uppercase tracking-wider">Réservations</p>
+                      </div>
+                      <NavLink to={`/dashboard/sites/${siteId}/booking/services`} className={linkClass}><Briefcase size={18} /> Prestations</NavLink>
+                      <NavLink to={`/dashboard/sites/${siteId}/booking/schedule`} className={linkClass}><Clock size={18} /> Horaires</NavLink>
+                      <NavLink to={`/dashboard/sites/${siteId}/booking/appointments`} className={linkClass}><Calendar size={18} /> Rendez-vous</NavLink>
+                    </>
+                  )}
                 </>
               )}
             </>
@@ -72,12 +93,10 @@ export default function Layout() {
               <NavLink to="/dashboard" end className={linkClass}>
                 <LayoutDashboard size={18} /> Dashboard
               </NavLink>
-              {isAdmin && (
-                <NavLink to="/dashboard/new" className={linkClass}>
-                  <Plus size={18} /> Nouveau site
-                </NavLink>
-              )}
-              {isAdmin && (
+              <NavLink to="/dashboard/new" className={linkClass}>
+                <Plus size={18} /> Nouveau site
+              </NavLink>
+              {user?.role === 'superadmin' && (
                 <NavLink to="/dashboard/users" className={linkClass}>
                   <Users size={18} /> Utilisateurs
                 </NavLink>

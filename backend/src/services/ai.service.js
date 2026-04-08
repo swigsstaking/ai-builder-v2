@@ -239,6 +239,39 @@ Génère du contenu pour une page CONTACT axée conversion et confiance. JSON:
   }
 }
 
+export async function generateBookingPageContent(site, config) {
+  const { specialty, practitionerName } = config;
+  const biz = site.business || {};
+  const name = practitionerName || biz.name || site.name;
+  const city = biz.city || '';
+  const phone = biz.phone || '';
+  const activity = specialty || biz.activity || '';
+
+  const sysPrompt = `Tu es un rédacteur web expert pour praticiens et professionnels de santé/bien-être/services en France. Tu crées du contenu engageant pour une page de réservation en ligne. Style professionnel, rassurant et chaleureux. Réponds UNIQUEMENT en JSON valide.`;
+
+  const bizContext = `Praticien: ${name} | Spécialité: ${activity} | Ville: ${city} | Tél: ${phone} | Services: ${biz.services || ''} | Description: ${biz.description || ''}`;
+
+  const prompt = `${bizContext}
+
+Génère du contenu pour une page de réservation de praticien. Les prestations doivent avoir des durées et prix RÉALISTES pour la spécialité "${activity}". JSON:
+{"heroPractitioner":{"name":"${name}","specialty":"${activity}","tagline":"accroche 1-2 phrases rassurante et professionnelle","ctaText":"Prendre rendez-vous","ctaUrl":"#booking"},"servicesBooking":{"title":"Nos prestations","subtitle":"courte description engageante","services":[{"name":"prestation principale","duration":"60 min","price":"XX €","description":"2-3 phrases décrivant la prestation"},{"name":"prestation 2","duration":"45 min","price":"XX €","description":"2-3 phrases"},{"name":"prestation 3","duration":"30 min","price":"XX €","description":"2-3 phrases"},{"name":"prestation 4","duration":"90 min","price":"XX €","description":"2-3 phrases"}]},"about":{"title":"À propos de ${name}","body":"<p>3-4 phrases parcours et formation.</p><p>2-3 phrases philosophie et approche.</p>","bulletPoints":[{"value":"diplôme ou certification"},{"value":"années d'expérience"},{"value":"spécialisation"},{"value":"approche unique"}]},"testimonials":{"items":[{"name":"Prénom L.","location":"${city}","rating":5,"text":"avis 2-3 phrases sur l'expérience"},{"name":"Prénom M.","location":"ville proche","rating":5,"text":"avis 2-3 phrases"},{"name":"Prénom D.","location":"ville proche","rating":5,"text":"avis 2-3 phrases"}]},"faq":{"items":[{"question":"Comment se déroule une première consultation ?","answer":"réponse 3-4 phrases"},{"question":"Quels sont les tarifs ?","answer":"réponse 2-3 phrases"},{"question":"Comment annuler ou reporter un rendez-vous ?","answer":"réponse 2-3 phrases"},{"question":"question spécifique à ${activity}","answer":"réponse 2-3 phrases"}]},"contact":{"title":"${name}${city ? ' — ' + city : ''}","body":"<p>Adresse et informations pratiques</p>","hours":"${biz.hours || 'Du lundi au vendredi de 9h à 19h'}"},"seo":{"title":"${name} — ${activity}${city ? ' à ' + city : ''} | Réservation en ligne","description":"Prenez rendez-vous avec ${name}, ${activity.toLowerCase()}${city ? ' à ' + city : ''}. Réservation en ligne simple et rapide.","keywords":["${activity.toLowerCase()} ${city.toLowerCase()}","rendez-vous ${activity.toLowerCase()}","réservation en ligne ${city.toLowerCase()}","${name.toLowerCase()}","praticien ${city.toLowerCase()}"]}}`;
+
+  const chatOpts = { temperature: 0.7, maxTokens: 4000, timeout: 120000 };
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const raw = await chat(
+        [{ role: 'system', content: sysPrompt }, { role: 'user', content: prompt }],
+        chatOpts
+      );
+      return parseJson(raw);
+    } catch (err) {
+      if (attempt === 1) {
+        console.warn(`[AI] Booking page generation attempt 1 failed (${err.message}), retrying...`);
+      } else throw err;
+    }
+  }
+}
+
 export async function generateSeoMetadata(site, pageContent) {
   const systemPrompt = `Tu es un expert SEO. Génère des métadonnées SEO optimisées. Réponds UNIQUEMENT en JSON.`;
 

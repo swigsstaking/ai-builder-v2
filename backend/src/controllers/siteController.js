@@ -8,11 +8,21 @@ import { markSiteDeleted } from '../services/billing.service.js';
 
 export const list = async (req, res, next) => {
   try {
-    // Only return AI Builder sites (those with designStyle field)
     const baseFilter = { designStyle: { $exists: true } };
-    const query = req.user.role === 'client'
-      ? { ...baseFilter, _id: { $in: req.user.assignedSites } }
-      : baseFilter;
+    let query;
+    if (req.user.role === 'superadmin') {
+      // Superadmin sees all sites (for platform management)
+      query = baseFilter;
+    } else {
+      // Everyone else sees only their own sites (owner OR assignedSites)
+      query = {
+        ...baseFilter,
+        $or: [
+          { owner: req.user._id },
+          { _id: { $in: req.user.assignedSites || [] } },
+        ],
+      };
+    }
     const sites = await Site.find(query).sort({ updatedAt: -1 });
     res.json({ sites });
   } catch (err) { next(err); }
@@ -41,7 +51,15 @@ export const create = async (req, res, next) => {
       }
       data.slug = slug;
     }
+    data.owner = req.user._id;
     const site = await Site.create(data);
+
+    // Auto-assign site to user
+    if (!req.user.assignedSites.some(id => id.toString() === site._id.toString())) {
+      req.user.assignedSites.push(site._id);
+      await req.user.save();
+    }
+
     res.status(201).json({ site });
   } catch (err) { next(err); }
 };

@@ -1,140 +1,120 @@
 # Prompt pour la prochaine session
 
 ```
-Lis les fichiers tasks/session-2026-04-08-sso.md et tasks/session-2026-04-08-booking-brief.md pour le contexte complet.
+Lis le fichier tasks/session-2026-04-08-handoff.md pour le contexte complet de la session précédente.
 
-## Mission : Implémenter la page de réservation (booking) + intégration Calendar
+## Contexte
+AI Builder est un SaaS de création de sites web via IA. Le backend tourne sur 192.168.110.59 (PM2 ai-builder-v2, port 4005), le frontend sur https://ai-builder.swigs.online. GitHub : github.com/swigsstaking/ai-builder-v2. SSH : user swigs, sudo password Labo. Login : admin@swigs.online / Admin123!.
 
-### Contexte
-AI Builder est un SaaS de création de sites web via IA. L'auth SSO Hub est en place — les users ont un hubUserId qui les lie à toutes les apps SWIGS (Calendar, Workflow, etc.).
-
-Backend : 192.168.110.59 (PM2 ai-builder-v2, port 4005)
-Frontend : https://ai-builder.swigs.online
-GitHub : github.com/swigsstaking/ai-builder-v2
-SSH : user swigs, sudo password Labo
-Login : admin@swigs.online / Admin123!
-Calendar API : même serveur, port 3008 (calendar.swigs.online)
-
-### Ce qui est déjà fait
+## État actuel — Ce qui est fait
 - SSO Hub intégré (login/register/google/magic-link proxiés vers le Hub)
-- JWT aligné { userId }, refresh token avec rotation, sessions en DB
-- Users ont hubUserId pour le cross-service
-- 5 templates (Modern, Bold, Elegant, Minimal, Artistic) fonctionnels
+- Google OAuth fonctionnel
+- JWT aligné { userId }, refresh token avec rotation
+- 5 templates (Modern, Bold, Elegant, Minimal, Artistic)
 - Création de sites avec IA (homepage + contact)
-- Migration de sites existants via OCR (deepseek-ocr + qwen3.5)
+- Migration de sites via OCR
+- Fix services vides + fix HTML body/bullet points
+- **Page booking (Phases A+B+E) implémentées localement** mais avec des bugs critiques
 
-### Architecture décidée
+## BUGS CRITIQUES À CORRIGER
 
-Calendar = moteur backend (disponibilités, widget iframe, emails)
-AI Builder = interface unique pour le praticien
+### Bug 1 : Templates backend non déployés (CAUSE RACINE)
+Les 5 templates backend SSG n'ont PAS été déployés sur le serveur après l'ajout des renderers booking. Résultat : les sections hero-practitioner, services-booking et booking-widget sont dans l'éditeur mais PAS rendues dans le HTML final.
 
-Le praticien ne quitte JAMAIS AI Builder. Les API Calendar sont appelées en proxy via le backend AI Builder.
+**Fix immédiat :**
+```bash
+cd /Users/corentinflaction/Documents/swigs/ai-builder
+scp backend/src/templates/styles/*.jsx swigs@192.168.110.59:/home/swigs/ai-builder-v2-backend/src/templates/styles/
+ssh swigs@192.168.110.59 "pm2 restart ai-builder-v2"
+```
+Puis rebuilder les sites booking existants pour régénérer le HTML.
 
-### Ce qu'il faut implémenter
+### Bug 2 : Changement de style plante
+Quand on change le design style dans le flow de création booking, ça plante. À investiguer dans BookingCreatePage.jsx — probablement un state mal géré lors du changement de style.
 
-#### Phase A : Template page booking
+### Bug 3 : Pas de pause midi dans les horaires
+L'onglet Réservations > Horaires ne permet pas de configurer une pause déjeuner (ex: fermé 12h-14h). L'API Calendar supporte-t-elle une pause ? Vérifier le format `workingDays` dans Calendar et adapter le frontend BookingSchedulePage.jsx.
 
-1. Nouveau type de page "booking" dans le modèle Page (ajouter à l'enum type)
-2. Sections du template booking :
-   - hero-practitioner : photo portrait, nom, titre/spécialité, accroche
-   - services-booking : prestations avec durée + prix (données éditoriales)
-   - about : bio, parcours, diplômes
-   - booking-widget : iframe calendar.swigs.online/book/{slug} (champ de config : calendarSlug)
-   - testimonials : avis clients (optionnel)
-   - contact : coordonnées, carte Google Maps, horaires
-3. Renderers dans les 5 templates (frontend + backend = 10 fichiers)
-4. Sections par défaut dans pageController pour type "booking"
+### Bug 4 : Navigation one-pager
+Pour un site booking (one-pager), la navbar montre "Accueil / À propos / Contact" comme des pages séparées. Pour un one-pager, ces liens devraient être des ancres (#about, #contact, #booking). Le bouton CTA devrait être "Prendre rendez-vous" au lieu de "Nous contacter".
 
-#### Phase B : Flow de création "Page de réservation"
+## AMÉLIORATIONS QUALITÉ
 
-1. 3ème option sur le dashboard /dashboard/new : "Page de réservation"
-2. Flow simplifié : nom + spécialité + (URL optionnelle) + (description optionnelle)
-3. Crée un Site one-pager avec 1 Page type "booking"
-4. L'IA génère le contenu adapté au métier du praticien
-5. Si URL fournie : utilise le pipeline OCR existant pour extraire nom, bio, prestations
+### 5. Témoignages masqués par défaut
+Les témoignages sont hidden sur une page booking. Pour un praticien, les avis sont essentiels. Rendre visible par défaut avec des témoignages IA générés.
 
-#### Phase C : Proxy API Calendar
+### 6. Pas de photo praticien
+Le hero-practitioner supporte un champ photoMediaId mais aucune photo n'est assignée par défaut. La page est 100% texte. Ajouter un placeholder visuel quand pas de photo.
 
-Le backend AI Builder expose des routes /api/calendar/* qui proxient vers calendar.swigs.online :
+### 7. CTA "Prendre rendez-vous" manquant dans la nav
+Le bouton principal de la navbar pour un site booking devrait être "Prendre rendez-vous" (ancre #booking).
 
-1. Routes proxy :
-   - GET/POST/PUT/DELETE /api/calendar/services → /api/services
-   - GET/POST/PUT /api/calendar/booking-profile → /api/booking-profile
-   - PATCH /api/calendar/preferences → /api/auth/preferences
-   - GET /api/calendar/bookings → /api/bookings
-   - PATCH /api/calendar/bookings/:id/cancel → /api/bookings/:id/cancel
-   - PATCH /api/calendar/bookings/:id/complete → /api/bookings/:id/complete
+## Fichiers modifiés (non commités, non pushés)
 
-2. Auth : Le proxy utilise le hubUserId de l'utilisateur connecté pour s'authentifier auprès de Calendar. Calendar et AI Builder partagent la même auth Hub, donc :
-   - Option 1 : AI Builder génère un JWT signé avec un service secret partagé contenant le hubUserId → Calendar le vérifie
-   - Option 2 : AI Builder forward le même JWT (si même JWT_SECRET) → vérifier si les JWT_SECRET sont identiques
-   - À vérifier : grep JWT_SECRET dans les .env de ai-builder et calendar sur le serveur
-
-3. Création automatique du BookingProfile : quand le praticien crée sa première page booking, AI Builder appelle POST /api/booking-profile avec { slug, businessName }
-
-#### Phase D : Onglet "Réservations" dans la sidebar
-
-Quand un site a une page de type "booking", un onglet apparaît dans la sidebar :
-- Prestations : CRUD (nom, durée, prix, buffer, description) — appelle proxy /api/calendar/services
-- Horaires : config par jour (lun-dim, heures début/fin) — appelle proxy /api/calendar/preferences
-- Rendez-vous : liste RDV à venir avec actions annuler/terminer — appelle proxy /api/calendar/bookings
-
-3 nouvelles pages frontend :
-- frontend/src/pages/BookingServicesPage.jsx
-- frontend/src/pages/BookingSchedulePage.jsx
-- frontend/src/pages/BookingAppointmentsPage.jsx
-
-Ajout dans la sidebar conditionnelle (Layout.jsx) + routes dans App.jsx.
-
-#### Phase E : Page booking ajoutée à un site existant
-
-Dans le modal "Ajouter des pages" (CreatePageModal.jsx), ajouter le type "Réservation" dans le dropdown. Quand sélectionné, crée la page avec les sections booking par défaut et propose de configurer le slug calendar.
-
-### Ordre de priorité
-Phase A (template) → Phase B (flow création) → Phase C (proxy) → Phase D (onglet) → Phase E (ajout à existant)
-
-Les phases A et B sont indépendantes de Calendar. Les phases C-D-E nécessitent le proxy.
-
-### Fichiers clés à modifier
+Tous ces fichiers ont des changements locaux pas encore sur GitHub :
 
 Backend :
-- backend/src/models/Page.js — ajouter "booking" au type enum
+- backend/server.js — routes calendar montées
+- backend/src/controllers/aiController.js — handler generateBookingPage
 - backend/src/controllers/pageController.js — DEFAULT_BOOKING_SECTIONS
+- backend/src/controllers/siteController.js — changements booking
+- backend/src/models/Page.js — type "booking", sections booking, calendarSlug
+- backend/src/models/Site.js — changements booking
+- backend/src/routes/ai.js — route generate-booking-page
+- backend/src/routes/calendar.js — NOUVEAU : proxy Calendar
+- backend/src/routes/sites.js — changements
+- backend/src/routes/users.js — changements
 - backend/src/services/ai.service.js — generateBookingPageContent()
-- backend/src/routes/calendar.js — NOUVEAU : proxy routes vers Calendar
-- backend/server.js — monter les routes /api/calendar
+- backend/src/templates/styles/*.jsx — renderers booking (5 fichiers)
 
 Frontend :
-- frontend/src/templates/styles/*.jsx (10 fichiers) — renderers booking sections
-- frontend/src/pages/SiteCreatePage.jsx — 3ème option "Page de réservation"
-- frontend/src/pages/BookingCreatePage.jsx — NOUVEAU : flow création one-pager
+- frontend/src/App.jsx — routes booking
+- frontend/src/components/CreatePageModal.jsx — type booking dans dropdown
+- frontend/src/components/Layout.jsx — onglet Réservations conditionnel
+- frontend/src/lib/aiPageBuilder.js — mapBookingAiContentToSections
+- frontend/src/pages/BookingCreatePage.jsx — NOUVEAU : flow création
 - frontend/src/pages/BookingServicesPage.jsx — NOUVEAU : CRUD prestations
 - frontend/src/pages/BookingSchedulePage.jsx — NOUVEAU : config horaires
 - frontend/src/pages/BookingAppointmentsPage.jsx — NOUVEAU : liste RDV
-- frontend/src/components/Layout.jsx — onglet conditionnel dans sidebar
-- frontend/src/App.jsx — nouvelles routes
-- frontend/src/services/api.js — calendarApi
+- frontend/src/pages/DashboardPage.jsx — changements
+- frontend/src/pages/PagesListPage.jsx — changements
+- frontend/src/pages/SiteCreatePage.jsx — 3ème carte booking
+- frontend/src/pages/editor/PropertiesPanel.jsx — propriétés booking
+- frontend/src/services/api.js — calendarApi + bookingApi
+- frontend/src/templates/styles/*.jsx — renderers booking (5 fichiers)
 
-### API Calendar existantes (sur port 3008)
-| Endpoint | Auth | Description |
-|----------|------|-------------|
-| GET /api/services | JWT | Liste prestations |
-| POST /api/services | JWT | Créer prestation |
-| PUT /api/services/:id | JWT | Modifier prestation |
-| DELETE /api/services/:id | JWT | Supprimer prestation |
-| GET /api/booking-profile | JWT | Profil de réservation |
-| POST /api/booking-profile | JWT | Créer profil (slug + businessName) |
-| PUT /api/booking-profile | JWT | Modifier profil |
-| PATCH /api/auth/preferences | JWT | Horaires de travail (workingDays) |
-| GET /api/bookings | JWT | RDV à venir |
-| PATCH /api/bookings/:id/cancel | JWT | Annuler RDV |
-| PATCH /api/bookings/:id/complete | JWT | Terminer RDV |
-| GET /api/widget/:slug | Public | Profil public + services |
+## Ordre des corrections
 
-### Points d'attention
-- Le backend est en PROD — ne rien casser
-- Deploy via scp + pm2 restart ai-builder-v2
-- Les templates backend sont utilisés pour le SSG build — chaque nouveau renderer doit exister dans frontend ET backend
-- Le proxy Calendar doit gérer les erreurs gracieusement (Calendar down, user pas de profil, etc.)
-- Tester avec Chrome MCP sur https://ai-builder.swigs.online
+1. **Déployer les templates backend** (fix immédiat, 1 commande scp)
+2. **Tester le rendu** — rebuilder un site booking et vérifier hero + services + widget
+3. **Fix changement de style** — investiguer BookingCreatePage.jsx
+4. **Fix navigation one-pager** — adapter le template pour les sites booking
+5. **Pause midi** — vérifier l'API Calendar workingDays, adapter BookingSchedulePage
+6. **Témoignages visible par défaut** — modifier DEFAULT_BOOKING_SECTIONS
+7. **Commit + push** tout sur GitHub
+8. **Audit final** — créer un site booking de test et vérifier chaque section
+
+## Serveurs
+| Serveur | IP | Port | PM2 |
+|---------|-----|------|-----|
+| AI Builder backend | 192.168.110.59 | 4005 | ai-builder-v2 |
+| Hub SWIGS | 192.168.110.59 | 3006 | swigs-hub |
+| Calendar | 192.168.110.59 | 3008 | swigs-calendar |
+| Ollama | 192.168.110.103 | 11434 | — |
+| MongoDB | 192.168.110.73 | 27017 | — |
+| Frontend prod | 192.168.110.59 | 443 | nginx |
+
+## Deploy
+```bash
+# Backend
+scp backend/src/FILE swigs@192.168.110.59:/home/swigs/ai-builder-v2-backend/src/FILE
+ssh swigs@192.168.110.59 "pm2 restart ai-builder-v2"
+
+# Frontend
+cd frontend && npx vite build
+scp -r dist/* swigs@192.168.110.59:/var/www/ai-builder/
+
+# Templates backend (SSG)
+scp backend/src/templates/styles/*.jsx swigs@192.168.110.59:/home/swigs/ai-builder-v2-backend/src/templates/styles/
+```
 ```

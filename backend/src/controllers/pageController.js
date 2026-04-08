@@ -36,6 +36,15 @@ const DEFAULT_CONTACT_SECTIONS = [
   { type: 'contact', order: 2, data: { title: 'Nous trouver', body: '', address: '', phone: '', email: '', hours: '', embedUrl: '', style: { backgroundColor: '', textColor: '' } } },
 ];
 
+const DEFAULT_BOOKING_SECTIONS = [
+  { type: 'hero-practitioner', order: 0, data: { name: '', specialty: '', tagline: '', photoMediaId: null, ctaText: 'Prendre rendez-vous', ctaUrl: '#booking', style: { backgroundColor: '', textColor: '' } } },
+  { type: 'services-booking', order: 1, data: { title: 'Nos prestations', subtitle: '', services: [], style: { backgroundColor: '', textColor: '' } } },
+  { type: 'about', order: 2, data: { title: 'À propos', body: '', bulletPoints: [], imageMediaId: null, ctaText: '', ctaUrl: '#booking', style: { backgroundColor: '', textColor: '' } } },
+  { type: 'testimonials', order: 3, visible: true, data: { title: 'Ce que disent nos clients', items: [], style: { backgroundColor: '', textColor: '' } } },
+  { type: 'booking-widget', order: 4, data: { title: 'Réserver en ligne', calendarSlug: '', style: { backgroundColor: '', textColor: '' } } },
+  { type: 'contact', order: 5, data: { title: 'Nous trouver', body: '', address: '', phone: '', email: '', hours: '', embedUrl: '', style: { backgroundColor: '', textColor: '' } } },
+];
+
 export const listBySite = async (req, res, next) => {
   try {
     const pages = await Page.find({ siteId: req.params.siteId }).sort({ sortOrder: 1 });
@@ -67,6 +76,8 @@ export const create = async (req, res, next) => {
         data.sections = JSON.parse(JSON.stringify(DEFAULT_CONTACT_SECTIONS));
       } else if (data.type === 'city') {
         data.sections = JSON.parse(JSON.stringify(DEFAULT_CITY_SECTIONS));
+      } else if (data.type === 'booking') {
+        data.sections = JSON.parse(JSON.stringify(DEFAULT_BOOKING_SECTIONS));
       } else if (data.type === 'homepage' || data.type === 'subpage') {
         data.sections = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
       }
@@ -129,6 +140,29 @@ export const create = async (req, res, next) => {
               section.data.embedUrl = buildMapsEmbedUrl(biz.address, biz.city, biz.zip);
             }
             break;
+          case 'hero-practitioner':
+            section.data.name = biz.name || '';
+            section.data.specialty = biz.activity || '';
+            section.data.tagline = biz.activity && biz.city
+              ? `Votre ${biz.activity.toLowerCase()}${cityStr}`
+              : '';
+            break;
+          case 'services-booking':
+            section.data.title = 'Nos prestations';
+            if (biz.services) {
+              section.data.services = biz.services.split(',').slice(0, 6).map(s => ({
+                name: s.trim(),
+                duration: '60 min',
+                price: '',
+                description: '',
+              }));
+            }
+            break;
+          case 'booking-widget':
+            if (data.calendarSlug) {
+              section.data.calendarSlug = data.calendarSlug;
+            }
+            break;
         }
       }
 
@@ -174,7 +208,7 @@ export const update = async (req, res, next) => {
     if (req.user.role === 'client' && !req.user.assignedSites.some(id => id.toString() === page.siteId.toString())) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    const allowed = ['title', 'slug', 'type', 'sortOrder', 'isMainHomepage', 'seo', 'sections', 'visible', 'cityTarget'];
+    const allowed = ['title', 'slug', 'type', 'sortOrder', 'isMainHomepage', 'seo', 'sections', 'visible', 'cityTarget', 'calendarSlug'];
     for (const key of Object.keys(req.body)) {
       if (allowed.includes(key)) page[key] = req.body[key];
     }

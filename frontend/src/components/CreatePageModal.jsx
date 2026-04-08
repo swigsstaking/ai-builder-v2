@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, X, Sparkles, Image, Loader, Check, Upload, MapPin } from 'lucide-react';
+import { Plus, X, Sparkles, Image, Loader, Check, Upload, MapPin, Calendar } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import { pagesApi, aiApi, mediaApi } from '../services/api';
-import { mapAiContentToSections, mapCityAiContentToSections, distributeImagesToSections } from '../lib/aiPageBuilder';
+import { mapAiContentToSections, mapCityAiContentToSections, mapBookingAiContentToSections, distributeImagesToSections } from '../lib/aiPageBuilder';
 
 export default function CreatePageModal({ siteId, site, isAdmin, existingPages, onCreated, onClose }) {
   const [pageList, setPageList] = useState([{ title: '', type: 'subpage', keyword: '', serviceFocus: '' }]);
@@ -15,6 +15,8 @@ export default function CreatePageModal({ siteId, site, isAdmin, existingPages, 
   const [progress, setProgress] = useState(0);
   const [activeMode, setActiveMode] = useState('standard');
   const [cityTarget, setCityTarget] = useState('');
+  const [bookingCalendarSlug, setBookingCalendarSlug] = useState('');
+  const [bookingUseAI, setBookingUseAI] = useState(true);
 
   const homepageKeyword = useMemo(() => {
     const hp = (existingPages || []).find(p => p.isMainHomepage || p.type === 'homepage');
@@ -215,6 +217,70 @@ export default function CreatePageModal({ siteId, site, isAdmin, existingPages, 
     }
   };
 
+  const handleCreateBookingPage = async () => {
+    setLoading(true);
+    setAiStep('Création de la page réservation...');
+    setProgress(15);
+
+    try {
+      const biz = site?.business || {};
+      const pageTitle = `${biz.name || 'Réservation'} — Réservation en ligne`;
+
+      // 1. Create page
+      const result = await pagesApi.create(siteId, {
+        title: pageTitle,
+        type: 'booking',
+        calendarSlug: bookingCalendarSlug.trim() || undefined,
+      });
+      const createdPage = result.page;
+
+      // 2. Upload new images
+      let allMediaIds = [...selectedMediaIds];
+      if (newImages.length > 0) {
+        for (const img of newImages) {
+          try {
+            const fd = new FormData();
+            fd.append('image', img.file);
+            const res = await mediaApi.upload(siteId, fd);
+            if (res.media?._id) allMediaIds.push(res.media._id);
+          } catch {}
+        }
+      }
+
+      // 3. AI generation (optional)
+      if (bookingUseAI && isAdmin) {
+        setAiStep('IA — Génération du contenu booking...');
+        setProgress(40);
+        try {
+          const { content } = await aiApi.generateBookingPage({
+            siteId,
+            specialty: biz.activity || '',
+            practitionerName: biz.name || '',
+          });
+
+          let sections = mapBookingAiContentToSections(createdPage.sections, content);
+          sections = distributeImagesToSections(sections, allMediaIds, existingPages.length);
+
+          await pagesApi.updateSections(createdPage._id, sections);
+          if (content.seo) await pagesApi.update(createdPage._id, { seo: content.seo });
+        } catch (err) {
+          console.error('Booking AI error:', err);
+          toast.error('Erreur IA pour la page booking');
+        }
+      }
+
+      setProgress(100);
+      setAiStep('Terminé !');
+      toast.success('Page de réservation créée');
+      setTimeout(() => onCreated(), 1000);
+    } catch (err) {
+      console.error('Create booking page error:', err);
+      toast.error('Erreur lors de la création');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const hasKeyword = pageList.some(p => p.keyword.trim());
   const hasTitle = pageList.some(p => p.title.trim());
 
@@ -255,6 +321,11 @@ export default function CreatePageModal({ siteId, site, isAdmin, existingPages, 
                   style={activeMode !== 'city' ? { background: 'rgba(255,255,255,0.06)' } : undefined}>
                   <MapPin size={13} /> Page ville
                 </button>
+                <button onClick={() => setActiveMode('booking')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors ${activeMode === 'booking' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:bg-white/[0.08]'}`}
+                  style={activeMode !== 'booking' ? { background: 'rgba(255,255,255,0.06)' } : undefined}>
+                  <Calendar size={13} /> Page réservation
+                </button>
               </div>
             )}
 
@@ -274,6 +345,29 @@ export default function CreatePageModal({ siteId, site, isAdmin, existingPages, 
                 </div>
                 <p className="text-xs text-slate-500">
                   H1 généré : <strong className="text-slate-300">{homepageKeyword ? `${homepageKeyword} à ${cityTarget || '...'}` : '(mot-clé manquant)'}</strong>
+                </p>
+              </div>
+            )}
+
+            {/* Booking page form */}
+            {activeMode === 'booking' && (
+              <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                <div>
+                  <label className="text-xs font-medium text-slate-500">Slug Calendar (optionnel)</label>
+                  <input value={bookingCalendarSlug} onChange={e => setBookingCalendarSlug(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    placeholder="Ex: dr-dupont (pour calendar.swigs.online/book/dr-dupont)" />
+                  <p className="text-xs text-slate-600 mt-1">Laissez vide si vous n'avez pas encore de compte Calendar</p>
+                </div>
+                {isAdmin && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={bookingUseAI} onChange={e => setBookingUseAI(e.target.checked)}
+                      className="rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/30" />
+                    <span className="text-sm text-slate-300">Générer le contenu avec l'IA</span>
+                  </label>
+                )}
+                <p className="text-xs text-slate-500">
+                  Une page avec les sections : praticien, prestations, à propos, widget de réservation et contact.
                 </p>
               </div>
             )}
@@ -388,6 +482,12 @@ export default function CreatePageModal({ siteId, site, isAdmin, existingPages, 
                   <Sparkles size={14} /> Créer la page ville
                 </button>
               )
+            ) : activeMode === 'booking' ? (
+              <button onClick={handleCreateBookingPage}
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-emerald-500 text-white rounded-lg hover:bg-emerald-500/90 disabled:opacity-50">
+                {bookingUseAI && isAdmin ? <Sparkles size={14} /> : <Calendar size={14} />}
+                Créer la page réservation
+              </button>
             ) : (
               <>
                 <button onClick={handleCreateWithoutAI} disabled={!hasTitle}

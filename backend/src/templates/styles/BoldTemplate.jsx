@@ -10,6 +10,7 @@ import {
   MapPin,
   Play,
   Trophy,
+  Clock,
 } from 'lucide-react';
 import { getSectionData, isSectionVisible, getVisibleSections, getStarRating } from '../sectionHelpers';
 
@@ -50,6 +51,17 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
   const faqItems = faqData.items || [];
   const googleTestimonials = googleReviewsData.testimonials || [];
   const teamMembers = teamData.members || [];
+
+  const heroPractitionerData = getSectionData(sections, 'hero-practitioner', {});
+  const servicesBookingData = getSectionData(sections, 'services-booking', { services: [] });
+  const bookingWidgetData = getSectionData(sections, 'booking-widget', {});
+
+  const showHeroPractitioner = isSectionVisible(sections, 'hero-practitioner');
+  const showServicesBooking = isSectionVisible(sections, 'services-booking');
+  const showBookingWidget = isSectionVisible(sections, 'booking-widget');
+  const isBookingPage = showHeroPractitioner || showBookingWidget;
+
+  const bookingServices = servicesBookingData.services || [];
 
   const handleNavigate = (target) => {
     if (onNavigate) {
@@ -551,10 +563,191 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
           </div>
         </section>
       ),
+
+    'hero-practitioner': () =>
+      showHeroPractitioner && (
+        <section
+          key="hero-practitioner"
+          id="hero-practitioner"
+          data-section="hero-practitioner"
+          className={`min-h-screen flex items-center justify-center relative ${isMobile ? 'px-6 pt-20' : 'px-12'}`}
+          style={{ background: `linear-gradient(135deg, ${secondary} 0%, #000 100%)` }}
+        >
+          <div
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-48"
+            style={{ backgroundColor: primary }}
+          />
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            {heroPractitionerData.photoMediaId && (
+              <div className="mb-8 flex justify-center">
+                <img
+                  src={`/api/media/${heroPractitionerData.photoMediaId}`}
+                  alt={heroPractitionerData.name || 'Praticien'}
+                  className="w-36 h-36 object-cover"
+                  style={{ border: `4px solid ${primary}` }}
+                />
+              </div>
+            )}
+            <h1
+              data-editable="name"
+              className={`font-black text-white uppercase leading-none mb-4 ${isMobile ? 'text-4xl' : 'text-6xl lg:text-7xl'}`}
+              style={{ letterSpacing: '-0.02em' }}
+            >
+              {heroPractitionerData.name || 'Dr. Nom'}
+            </h1>
+            {heroPractitionerData.specialty && (
+              <p
+                data-editable="specialty"
+                className={`font-bold uppercase tracking-wider mb-6 ${isMobile ? 'text-lg' : 'text-xl'}`}
+                style={{ color: primary }}
+              >
+                {heroPractitionerData.specialty}
+              </p>
+            )}
+            {heroPractitionerData.tagline && (
+              <p
+                data-editable="tagline"
+                className={`text-white/80 mb-10 max-w-2xl mx-auto ${isMobile ? 'text-lg' : 'text-xl'}`}
+              >
+                {heroPractitionerData.tagline}
+              </p>
+            )}
+            {heroPractitionerData.ctaText && (
+              <a
+                href={heroPractitionerData.ctaUrl || '#booking-widget'}
+                className="inline-flex items-center gap-3 px-10 py-5 font-bold uppercase tracking-wider text-white hover:scale-105 transition-transform"
+                style={{ backgroundColor: primary }}
+              >
+                {heroPractitionerData.ctaText}
+                <ArrowRight className="w-5 h-5" />
+              </a>
+            )}
+          </div>
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/30 flex flex-col items-center gap-2">
+            <span className="text-xs uppercase tracking-widest">Scroll</span>
+            <div className="w-px h-12 bg-gradient-to-b from-white/30 to-transparent" />
+          </div>
+        </section>
+      ),
+
+    'services-booking': () =>
+      showServicesBooking && bookingServices.length > 0 && (
+        <section
+          key="services-booking"
+          id="services-booking"
+          data-section="services-booking"
+          className={`${isMobile ? 'py-20 px-6' : 'py-32 px-12'}`}
+          style={{ backgroundColor: secondary }}
+        >
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-16 h-1" style={{ backgroundColor: primary }} />
+              <h2
+                data-editable="title"
+                className={`font-black text-white uppercase ${isMobile ? 'text-3xl' : 'text-5xl'}`}
+              >
+                {servicesBookingData.title || 'NOS PRESTATIONS'}
+              </h2>
+            </div>
+            {servicesBookingData.subtitle && (
+              <p data-editable="subtitle" className="text-white/50 mb-12 ml-20 text-lg">
+                {servicesBookingData.subtitle}
+              </p>
+            )}
+            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {bookingServices.map((service, idx) => (
+                <div
+                  key={idx}
+                  className="p-8 border-2 border-white/10 hover:border-white/30 transition-colors"
+                  style={{ backgroundColor: `${secondary}` }}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <h3
+                      data-editable="name"
+                      className="font-black text-white uppercase tracking-wide text-lg"
+                    >
+                      {service.name}
+                    </h3>
+                    {service.price && (
+                      <span
+                        className="font-black text-xl flex-shrink-0 ml-4"
+                        style={{ color: primary }}
+                      >
+                        {service.price}
+                      </span>
+                    )}
+                  </div>
+                  {service.duration && (
+                    <div className="flex items-center gap-2 mb-3 text-white/40 text-sm uppercase tracking-wider">
+                      <Clock className="w-4 h-4" />
+                      <span>{service.duration}</span>
+                    </div>
+                  )}
+                  {service.description && (
+                    <p className="text-white/50 text-sm leading-relaxed mb-6">{service.description}</p>
+                  )}
+                  <button
+                    className="px-6 py-3 font-bold uppercase tracking-wider text-sm text-white rounded-md hover:scale-105 transition-transform"
+                    style={{ backgroundColor: primary }}
+                  >
+                    Réserver
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ),
+
+    'booking-widget': () =>
+      showBookingWidget && (
+        <section
+          key="booking-widget"
+          id="booking-widget"
+          data-section="booking-widget"
+          className={`${isMobile ? 'py-20 px-6' : 'py-32 px-12'}`}
+          style={{ backgroundColor: secondary }}
+        >
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-4 mb-12">
+              <div className="w-16 h-1" style={{ backgroundColor: primary }} />
+              <h2
+                data-editable="title"
+                className={`font-black text-white uppercase ${isMobile ? 'text-3xl' : 'text-5xl'}`}
+              >
+                {bookingWidgetData.title || 'RÉSERVER'}
+              </h2>
+            </div>
+            {bookingWidgetData.calendarSlug ? (
+              <div className="border-2 border-white/10 overflow-hidden">
+                <iframe
+                  src={`https://cal.com/${bookingWidgetData.calendarSlug}`}
+                  width="100%"
+                  height="600"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  title="Réservation"
+                />
+              </div>
+            ) : (
+              <div
+                className="border-2 border-white/10 p-16 text-center"
+              >
+                <p className="text-white/30 uppercase tracking-widest text-sm font-bold">
+                  Calendrier de réservation
+                </p>
+                <p className="text-white/20 mt-2 text-sm">
+                  Configurez votre lien de calendrier pour activer la réservation en ligne.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      ),
   };
 
   // Default section order
-  const defaultOrder = ['hero', 'services', 'about', 'testimonials', 'google-reviews', 'faq', 'team', 'cta', 'contact'];
+  const defaultOrder = ['hero', 'hero-practitioner', 'services', 'services-booking', 'about', 'testimonials', 'google-reviews', 'faq', 'team', 'cta', 'booking-widget', 'contact'];
 
   // Render sections in order from the sections array, falling back to default order
   const visibleSections = getVisibleSections(sections);
@@ -585,39 +778,70 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
           {!isMobile && (
             <div className="flex items-center gap-8">
               <span
-                onClick={() => handleNavigate('hero')}
+                onClick={() => handleNavigate(isBookingPage ? 'hero-practitioner' : 'hero')}
                 className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
               >
                 Accueil
               </span>
-              {showServices && services.length > 0 && (
-                <span
-                  onClick={() => handleNavigate('services')}
-                  className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-                >
-                  Services
-                </span>
+              {isBookingPage ? (
+                <>
+                  {showServicesBooking && bookingServices.length > 0 && (
+                    <span
+                      onClick={() => handleNavigate('services-booking')}
+                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
+                    >
+                      Prestations
+                    </span>
+                  )}
+                  {showAbout && aboutData.body && (
+                    <span
+                      onClick={() => handleNavigate('about')}
+                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
+                    >
+                      À propos
+                    </span>
+                  )}
+                  {showBookingWidget && (
+                    <span
+                      onClick={() => handleNavigate('booking')}
+                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
+                    >
+                      Réserver
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  {showServices && services.length > 0 && (
+                    <span
+                      onClick={() => handleNavigate('services')}
+                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
+                    >
+                      Services
+                    </span>
+                  )}
+                  {showAbout && aboutData.body && (
+                    <span
+                      onClick={() => handleNavigate('about')}
+                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
+                    >
+                      À propos
+                    </span>
+                  )}
+                  <span
+                    onClick={() => handleNavigate('contact')}
+                    className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
+                  >
+                    Contact
+                  </span>
+                </>
               )}
-              {showAbout && aboutData.body && (
-                <span
-                  onClick={() => handleNavigate('about')}
-                  className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-                >
-                  À propos
-                </span>
-              )}
-              <span
-                onClick={() => handleNavigate('contact')}
-                className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-              >
-                Contact
-              </span>
               <button
                 className="px-6 py-3 font-bold text-sm uppercase tracking-wider"
                 style={{ backgroundColor: primary, color: 'white' }}
-                onClick={() => handleNavigate('contact')}
+                onClick={() => handleNavigate(isBookingPage ? 'booking' : 'contact')}
               >
-                Démarrer
+                {isBookingPage ? 'Prendre rendez-vous' : 'Nous contacter'}
               </button>
             </div>
           )}

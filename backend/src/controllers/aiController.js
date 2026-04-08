@@ -88,6 +88,19 @@ export const generateCityPage = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+export const generateBookingPage = async (req, res, next) => {
+  try {
+    const { siteId, specialty, practitionerName } = req.body;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+
+    const site = await Site.findById(siteId).lean();
+    if (!site) return res.status(404).json({ error: 'Site not found' });
+
+    const content = await aiService.generateBookingPageContent(site, { specialty, practitionerName });
+    res.json({ content });
+  } catch (err) { next(err); }
+};
+
 export const rewrite = async (req, res, next) => {
   try {
     const { text, instruction } = req.body;

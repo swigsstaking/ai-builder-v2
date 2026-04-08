@@ -19,6 +19,7 @@ import aiRoutes from './src/routes/ai.js';
 import usersRoutes from './src/routes/users.js';
 import adminRoutes from './src/routes/admin.js';
 import migrationRoutes from './src/routes/migration.js';
+import calendarRoutes from './src/routes/calendar.js';
 import { errorHandler } from './src/middleware/errorHandler.js';
 import { startBillingCron } from './src/cron/billing-cron.js';
 
@@ -38,7 +39,7 @@ app.use(helmet({
       fontSrc: ["'self'", "data:"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'"],
-      frameSrc: ["'self'", "https://www.google.com", "https://maps.google.com"],
+      frameSrc: ["'self'", "https://www.google.com", "https://maps.google.com", "https://calendar.swigs.online"],
     },
   },
 }));
@@ -88,6 +89,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/migration', migrationRoutes);
+app.use('/api/calendar', calendarRoutes);
 
 // Health check
 app.get('/api/health', async (req, res) => {

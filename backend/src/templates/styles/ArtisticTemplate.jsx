@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Users,
   BadgeCheck,
+  Clock,
 } from 'lucide-react';
 import { getSection, getSectionData, isSectionVisible } from '../sectionHelpers';
 
@@ -36,6 +37,16 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
   const contactData = getSectionData(sections, 'contact', {});
   const ctaData = getSectionData(sections, 'cta', {});
   const teamData = getSectionData(sections, 'team', { members: [] });
+  const heroPractitionerData = getSectionData(sections, 'hero-practitioner', {});
+  const servicesBookingData = getSectionData(sections, 'services-booking', { services: [] });
+  const bookingWidgetData = getSectionData(sections, 'booking-widget', {});
+
+  const showHeroPractitioner = isSectionVisible(sections, 'hero-practitioner');
+  const showServicesBooking = isSectionVisible(sections, 'services-booking');
+  const showBookingWidget = isSectionVisible(sections, 'booking-widget');
+  const isBookingPage = showHeroPractitioner || showBookingWidget;
+
+  const bookingServices = servicesBookingData.services || [];
 
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
@@ -75,39 +86,70 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
           {!isMobile && (
             <div className="flex items-center gap-6">
               <span
-                onClick={() => handleNavigate('home')}
+                onClick={() => handleNavigate(isBookingPage ? 'hero-practitioner' : 'home')}
                 className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
               >
                 Accueil
               </span>
-              {isSectionVisible(sections, 'services') && servicesData.services.length > 0 && (
-                <span
-                  onClick={() => handleNavigate('services')}
-                  className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
-                >
-                  Services
-                </span>
+              {isBookingPage ? (
+                <>
+                  {showServicesBooking && bookingServices.length > 0 && (
+                    <span
+                      onClick={() => handleNavigate('services-booking')}
+                      className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
+                    >
+                      Prestations
+                    </span>
+                  )}
+                  {isSectionVisible(sections, 'about') && aboutData.body && (
+                    <span
+                      onClick={() => handleNavigate('about')}
+                      className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
+                    >
+                      À propos
+                    </span>
+                  )}
+                  {showBookingWidget && (
+                    <span
+                      onClick={() => handleNavigate('booking')}
+                      className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
+                    >
+                      Réserver
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  {isSectionVisible(sections, 'services') && servicesData.services.length > 0 && (
+                    <span
+                      onClick={() => handleNavigate('services')}
+                      className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
+                    >
+                      Services
+                    </span>
+                  )}
+                  {isSectionVisible(sections, 'about') && aboutData.body && (
+                    <span
+                      onClick={() => handleNavigate('about')}
+                      className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
+                    >
+                      À propos
+                    </span>
+                  )}
+                  <span
+                    onClick={() => handleNavigate('contact')}
+                    className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
+                  >
+                    Contact
+                  </span>
+                </>
               )}
-              {isSectionVisible(sections, 'about') && aboutData.body && (
-                <span
-                  onClick={() => handleNavigate('about')}
-                  className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
-                >
-                  À propos
-                </span>
-              )}
-              <span
-                onClick={() => handleNavigate('contact')}
-                className="text-white/70 text-sm hover:text-white cursor-pointer transition-colors"
-              >
-                Contact
-              </span>
               <button
                 className="px-4 py-2 rounded-full text-sm font-medium shadow-lg hover:scale-105 transition-transform"
                 style={{ backgroundColor: accent, color: secondary }}
-                onClick={() => handleNavigate('contact')}
+                onClick={() => handleNavigate(isBookingPage ? 'booking' : 'contact')}
               >
-                Collaborer
+                {isBookingPage ? 'Prendre rendez-vous' : 'Nous contacter'}
               </button>
             </div>
           )}
@@ -564,6 +606,240 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Hero Practitioner */}
+      {showHeroPractitioner && (
+        <section
+          id="hero-practitioner"
+          data-section="hero-practitioner"
+          className={`relative ${isMobile ? 'py-16 px-6' : 'py-24 px-12'} overflow-hidden`}
+          style={{
+            background: `linear-gradient(160deg, ${secondary} 0%, ${primary}90 60%, ${accent}70 100%)`,
+          }}
+        >
+          {/* Decorative shapes */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div
+              className="absolute w-72 h-72 rounded-full opacity-10 blur-3xl"
+              style={{ backgroundColor: accent, top: '-10%', right: '5%' }}
+            />
+            <div
+              className="absolute w-40 h-40 rounded-3xl rotate-45 opacity-20"
+              style={{ backgroundColor: primary, bottom: '10%', left: '10%' }}
+            />
+            <div
+              className="absolute w-24 h-24 rounded-2xl -rotate-12 opacity-15"
+              style={{ backgroundColor: accent, top: '20%', left: '5%' }}
+            />
+          </div>
+
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            {heroPractitionerData.photoMediaId && (
+              <div className="mb-8 flex justify-center">
+                <div
+                  className="p-1.5 rounded-full rotate-3"
+                  style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}
+                >
+                  <img
+                    src={`/api/media/${heroPractitionerData.photoMediaId}/file`}
+                    alt={heroPractitionerData.name || 'Praticien'}
+                    className="w-36 h-36 rounded-full object-cover border-4 border-white/20 shadow-2xl"
+                  />
+                </div>
+              </div>
+            )}
+            <h1
+              data-editable="name"
+              className={`font-bold text-white ${isMobile ? 'text-3xl' : 'text-5xl lg:text-6xl'} mb-4 leading-tight`}
+            >
+              {heroPractitionerData.name || 'Votre praticien'}
+            </h1>
+            {heroPractitionerData.specialty && (
+              <p
+                className={`font-semibold mb-4 ${isMobile ? 'text-lg' : 'text-2xl'}`}
+                style={{
+                  background: `linear-gradient(135deg, ${accent}, ${primary})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {heroPractitionerData.specialty}
+              </p>
+            )}
+            {heroPractitionerData.tagline && (
+              <p className={`text-white/70 max-w-2xl mx-auto mb-10 ${isMobile ? 'text-base' : 'text-lg'}`}>
+                {heroPractitionerData.tagline}
+              </p>
+            )}
+            {heroPractitionerData.ctaText && (
+              <button
+                className={`px-8 py-4 rounded-full font-semibold shadow-2xl hover:scale-105 transition-all ${isMobile ? 'text-base' : 'text-lg'}`}
+                style={{ backgroundColor: accent, color: secondary }}
+                onClick={() => handleNavigate(heroPractitionerData.ctaUrl?.replace('#', '') || 'booking')}
+              >
+                {heroPractitionerData.ctaText} <ArrowRight className="inline w-5 h-5 ml-2" />
+              </button>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Services Booking */}
+      {showServicesBooking && bookingServices.length > 0 && (
+        <section
+          id="services-booking"
+          data-section="services-booking"
+          className={`${isMobile ? 'py-16 px-6' : 'py-24 px-12'} bg-white relative overflow-hidden`}
+        >
+          {/* Decorative blobs */}
+          <div
+            className="absolute -top-20 -right-20 w-72 h-72 rounded-full opacity-10 blur-3xl pointer-events-none"
+            style={{ backgroundColor: primary }}
+          />
+          <div
+            className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full opacity-10 blur-2xl pointer-events-none"
+            style={{ backgroundColor: accent }}
+          />
+
+          <div className="max-w-6xl mx-auto relative z-10">
+            <div className="text-center mb-12">
+              <span
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{ backgroundColor: `${primary}15`, color: primary }}
+              >
+                <Sparkles className="w-4 h-4" />
+                Prestations
+              </span>
+              <h2
+                data-editable="title"
+                className={`font-bold ${isMobile ? 'text-2xl' : 'text-4xl'}`}
+                style={{ color: secondary }}
+              >
+                {servicesBookingData.title || 'Nos prestations'}
+              </h2>
+              {servicesBookingData.subtitle && (
+                <p className="text-gray-500 mt-3 max-w-xl mx-auto">{servicesBookingData.subtitle}</p>
+              )}
+            </div>
+            <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {bookingServices.map((svc, idx) => (
+                <div
+                  key={idx}
+                  className={`relative p-[2px] rounded-3xl overflow-hidden group hover:scale-[1.02] transition-all duration-300 ${!isMobile && idx % 2 === 1 ? 'mt-6' : ''}`}
+                  style={{ background: `linear-gradient(135deg, ${primary}50, ${accent}50)` }}
+                >
+                  <div className="bg-white p-6 rounded-3xl h-full flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-lg mb-1" style={{ color: secondary }}>
+                        {svc.name}
+                      </h3>
+                      {svc.description && (
+                        <p className="text-gray-500 text-sm mb-3 line-clamp-2">{svc.description}</p>
+                      )}
+                      <div className="flex items-center gap-4">
+                        {svc.duration && (
+                          <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                            <Clock className="w-3.5 h-3.5" /> {svc.duration}
+                          </span>
+                        )}
+                        {svc.price && (
+                          <span
+                            className="text-sm font-bold"
+                            style={{
+                              background: `linear-gradient(135deg, ${primary}, ${accent})`,
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent',
+                            }}
+                          >
+                            {svc.price}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      className="px-5 py-2.5 rounded-full text-sm font-semibold text-white flex-shrink-0 shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                      style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}
+                      onClick={() => handleNavigate('booking')}
+                    >
+                      Réserver
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Booking Widget */}
+      {showBookingWidget && (
+        <section
+          id="booking"
+          data-section="booking-widget"
+          className={`${isMobile ? 'py-16 px-6' : 'py-24 px-12'} relative overflow-hidden`}
+          style={{ backgroundColor: `${secondary}08` }}
+        >
+          {/* Decorative element */}
+          <div
+            className="absolute -top-12 -left-12 w-48 h-48 rounded-full opacity-10 blur-3xl pointer-events-none"
+            style={{ backgroundColor: primary }}
+          />
+          <div
+            className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full opacity-10 blur-2xl pointer-events-none"
+            style={{ backgroundColor: accent }}
+          />
+
+          <div className="max-w-4xl mx-auto relative z-10">
+            {bookingWidgetData.title && (
+              <div className="text-center mb-10">
+                <span
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4"
+                  style={{ backgroundColor: `${accent}20`, color: accent }}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Rendez-vous
+                </span>
+                <h2
+                  data-editable="title"
+                  className={`font-bold ${isMobile ? 'text-2xl' : 'text-4xl'}`}
+                  style={{ color: secondary }}
+                >
+                  {bookingWidgetData.title}
+                </h2>
+              </div>
+            )}
+            {bookingWidgetData.calendarSlug ? (
+              <div
+                className="relative p-[2px] rounded-3xl overflow-hidden shadow-2xl"
+                style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}
+              >
+                <div className="bg-white rounded-3xl overflow-hidden">
+                  <iframe
+                    src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}`}
+                    title="Réservation en ligne"
+                    className="w-full border-0"
+                    style={{ height: isMobile ? '500px' : '650px' }}
+                    allow="payment"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div
+                className="rounded-3xl border-2 border-dashed flex items-center justify-center"
+                style={{ borderColor: `${primary}40`, height: '300px', backgroundColor: `${primary}05` }}
+              >
+                <div className="text-center">
+                  <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: primary }} />
+                  <p className="text-gray-400">
+                    Widget de réservation<br />
+                    <span className="text-sm">Configurez le slug Calendar dans l'éditeur</span>
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}

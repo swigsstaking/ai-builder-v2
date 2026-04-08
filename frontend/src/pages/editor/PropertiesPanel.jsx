@@ -284,6 +284,11 @@ function SectionEditor({ section, idx, onChange, onAIRewrite, onMediaPick, site 
     case 'cta': return <>{colorBar}{text("Texte", "text")}{text("Texte du bouton", "ctaText")}{text("Lien", "ctaUrl")}{select("Style", "bannerStyle", [{value:'dark',label:'Sombre'},{value:'light',label:'Clair'},{value:'accent',label:'Accent'}])}</>;
     case 'team': return <>{colorBar}{text("Titre", "title")}{richText("Contenu", "body")}{image("Image", "imageMediaId")}{list("Membres", "members", [{key:'imageMediaId',label:'Photo',type:'image'},{key:'name',label:'Nom'},{key:'role',label:'Rôle'},{key:'bio',label:'Bio',multiline:true}], "Membre")}</>;
 
+    // === Booking page types ===
+    case 'hero-practitioner': return <>{colorBar}{text("Nom", "name")}{text("Spécialité", "specialty")}{text("Accroche", "tagline")}{image("Photo", "photoMediaId")}{text("Texte du bouton", "ctaText")}{text("Lien du bouton", "ctaUrl")}</>;
+    case 'services-booking': return <>{colorBar}{text("Titre", "title")}{text("Sous-titre", "subtitle")}{list("Prestations", "services", [{key:'name',label:'Nom'},{key:'duration',label:'Durée'},{key:'price',label:'Prix'},{key:'description',label:'Description',multiline:true}], "Prestation")}</>;
+    case 'booking-widget': return <>{colorBar}{text("Titre", "title")}{text("Slug Calendar", "calendarSlug")}</>;
+
     // === Legacy types (backward compat during migration) ===
     case 'services-grid': return <>{colorBar}{text("Titre", "title")}{text("Sous-titre", "subtitle")}{list("Services", "services", [{key:'imageMediaId',label:'Image',type:'image'},{key:'name',label:'Nom'},{key:'shortDescription',label:'Description courte'},{key:'linkUrl',label:'Lien (URL page)'}], "Service")}</>;
     case 'description': return <>{colorBar}{text("Titre", "title")}{richText("Contenu", "body")}{list("Points clés", "bulletPoints", [{key:'value',label:'Point'}], "Point")}{text("Texte du bouton", "ctaText")}{text("Lien du bouton", "ctaUrl")}{image("Image", "imageMediaId")}</>;

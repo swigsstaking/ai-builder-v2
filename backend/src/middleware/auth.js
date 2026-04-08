@@ -72,11 +72,25 @@ export const requireAdmin = (req, res, next) => {
   next();
 };
 
-export const requireSiteAccess = (req, res, next) => {
-  if (['admin', 'superadmin'].includes(req.user.role)) return next();
-  const siteId = req.params.siteId || req.params.id;
-  if (!siteId || !req.user.assignedSites.some(id => id.toString() === siteId)) {
+export const requireSuperAdmin = (req, res, next) => {
+  if (req.user?.role !== 'superadmin') {
     return res.status(403).json({ error: 'Access denied' });
   }
   next();
+};
+
+export const requireSiteAccess = async (req, res, next) => {
+  if (req.user.role === 'superadmin') return next();
+  const siteId = req.params.siteId || req.params.id;
+  if (!siteId) return res.status(403).json({ error: 'Access denied' });
+
+  // Check ownership via assignedSites
+  if (req.user.assignedSites.some(id => id.toString() === siteId)) return next();
+
+  // Check ownership via owner field
+  const Site = (await import('../models/Site.js')).default;
+  const site = await Site.findById(siteId).select('owner').lean();
+  if (site && site.owner?.toString() === req.user._id.toString()) return next();
+
+  return res.status(403).json({ error: 'Access denied' });
 };
