@@ -7,18 +7,39 @@ const useAuthStore = create((set, get) => ({
   refreshToken: localStorage.getItem('aibuilder_refresh_token'),
   loading: true,
 
-  loginWithHub: () => {
-    window.location.href = '/api/auth/login';
+  login: async (email, password) => {
+    const { accessToken, refreshToken, user } = await authApi.login({ email, password });
+    localStorage.setItem('aibuilder_access_token', accessToken);
+    localStorage.setItem('aibuilder_refresh_token', refreshToken);
+    set({ accessToken, refreshToken, user, loading: false });
   },
 
-  registerWithHub: () => {
-    const hubUrl = import.meta.env.VITE_HUB_URL || 'https://apps.swigs.online';
-    const returnUrl = encodeURIComponent(window.location.origin + '/api/auth/login');
-    window.location.href = `${hubUrl}/register?returnUrl=${returnUrl}`;
+  register: async (email, name, password) => {
+    const data = await authApi.register({ email, name, password });
+    if (data.accessToken) {
+      localStorage.setItem('aibuilder_access_token', data.accessToken);
+      localStorage.setItem('aibuilder_refresh_token', data.refreshToken);
+      set({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user, loading: false });
+      return { loggedIn: true };
+    }
+    // Magic link flow (no password) — Hub sends email
+    return { loggedIn: false, message: data.message };
   },
 
-  exchangeAuthCode: async (authCode) => {
-    const { accessToken, refreshToken, user } = await authApi.exchange({ authCode });
+  googleLogin: async (idToken) => {
+    const { accessToken, refreshToken, user } = await authApi.googleLogin({ idToken });
+    localStorage.setItem('aibuilder_access_token', accessToken);
+    localStorage.setItem('aibuilder_refresh_token', refreshToken);
+    set({ accessToken, refreshToken, user, loading: false });
+  },
+
+  requestMagicLink: async (email) => {
+    const data = await authApi.magicLink({ email });
+    return data;
+  },
+
+  ssoCallback: async (ssoToken) => {
+    const { accessToken, refreshToken, user } = await authApi.ssoCallback({ ssoToken });
     localStorage.setItem('aibuilder_access_token', accessToken);
     localStorage.setItem('aibuilder_refresh_token', refreshToken);
     set({ accessToken, refreshToken, user, loading: false });
@@ -40,7 +61,7 @@ const useAuthStore = create((set, get) => ({
     try {
       if (rt) await authApi.logout({ refreshToken: rt });
     } catch {
-      // ignore logout errors
+      // ignore
     }
     localStorage.removeItem('aibuilder_access_token');
     localStorage.removeItem('aibuilder_refresh_token');

@@ -5,7 +5,6 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Track if we're currently refreshing to avoid infinite loops
 let isRefreshing = false;
 let refreshPromise = null;
 
@@ -20,7 +19,6 @@ api.interceptors.response.use(
   async (err) => {
     const originalRequest = err.config;
 
-    // If 401 and not already retrying, attempt token refresh
     if (err.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -32,7 +30,6 @@ api.interceptors.response.use(
       }
 
       try {
-        // Deduplicate concurrent refresh calls
         if (!isRefreshing) {
           isRefreshing = true;
           refreshPromise = api.post('/auth/refresh', { refreshToken });
@@ -45,11 +42,9 @@ api.interceptors.response.use(
         localStorage.setItem('aibuilder_access_token', newToken);
         localStorage.setItem('aibuilder_refresh_token', newRefresh);
 
-        // Update auth store
         const { default: useAuthStore } = await import('../stores/authStore');
         useAuthStore.setState({ accessToken: newToken, refreshToken: newRefresh });
 
-        // Retry original request with new token
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch {
@@ -67,7 +62,11 @@ api.interceptors.response.use(
 );
 
 export const authApi = {
-  exchange: (data) => api.post('/auth/exchange', data),
+  login: (data) => api.post('/auth/login', data),
+  register: (data) => api.post('/auth/register', data),
+  googleLogin: (data) => api.post('/auth/google', data),
+  magicLink: (data) => api.post('/auth/magic-link', data),
+  ssoCallback: (data) => api.post('/auth/sso-callback', data),
   refresh: (data) => api.post('/auth/refresh', data),
   getMe: () => api.get('/auth/me'),
   logout: (data) => api.post('/auth/logout', data),

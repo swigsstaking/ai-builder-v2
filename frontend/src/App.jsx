@@ -41,33 +41,21 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
-  const { accessToken, fetchUser, loading, user, exchangeAuthCode } = useAuthStore();
+  const { accessToken, fetchUser, loading, user, ssoCallback } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Handle SSO auth_code from callback redirect
+  // Handle SSO token from magic link redirect
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const authCode = params.get('auth_code');
-    const authError = params.get('auth_error');
+    const ssoToken = params.get('sso_token');
 
-    if (authError) {
-      console.error('SSO auth error:', authError);
-      // Clean URL
-      const cleanUrl = location.pathname;
-      window.history.replaceState({}, '', cleanUrl);
-      return;
-    }
-
-    if (authCode) {
-      // Clean URL immediately
-      const cleanUrl = location.pathname;
-      window.history.replaceState({}, '', cleanUrl);
-
-      exchangeAuthCode(authCode)
+    if (ssoToken) {
+      window.history.replaceState({}, '', location.pathname);
+      ssoCallback(ssoToken)
         .then(() => navigate('/dashboard', { replace: true }))
         .catch((err) => {
-          console.error('Auth code exchange failed:', err);
+          console.error('SSO callback failed:', err);
           navigate('/login', { replace: true });
         });
       return;

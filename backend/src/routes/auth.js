@@ -1,15 +1,12 @@
 import express from 'express';
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 import User from '../models/User.js';
 import Session from '../models/Session.js';
-import { PkceState, AuthCode } from '../models/OAuthState.js';
 import { generateToken, requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Environment config
 const HUB_URL = process.env.HUB_URL || 'https://apps.swigs.online';
 const APP_ID = process.env.APP_ID || 'ai-builder';
 const APP_SECRET = process.env.APP_SECRET;
@@ -19,214 +16,262 @@ const hashRefreshToken = (token) =>
   crypto.createHash('sha256').update(token).digest('hex');
 
 /**
- * GET /api/auth/login
- * Start OAuth flow with PKCE
+ * Find-or-create local user from Hub user data
+ * Handles migration of existing users by email
  */
-router.get('/login', async (req, res) => {
-  let returnUrl = req.query.returnUrl || '/';
+async function findOrCreateUser(hubUser) {
+  const hubUserId = hubUser.id;
+  const email = hubUser.email;
 
-  // Validate returnUrl
-  if (returnUrl.startsWith('http://') || returnUrl.startsWith('https://')) {
-    returnUrl = '/';
-  } else if (!returnUrl.startsWith('/') || returnUrl.startsWith('//')) {
-    returnUrl = '/';
-  }
-
-  // Generate PKCE values
-  const codeVerifier = crypto.randomBytes(32).toString('base64url');
-  const codeChallenge = crypto
-    .createHash('sha256')
-    .update(codeVerifier)
-    .digest('base64url');
-
-  // Generate state for CSRF protection
-  const state = crypto.randomBytes(16).toString('hex');
-
-  // Store verifier in MongoDB (expires in 10 min)
-  await PkceState.create({
-    state,
-    codeVerifier,
-    returnUrl,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+  let user = await User.findOne({
+    $or: [{ hubUserId }, { email }]
   });
 
-  // Build authorization URL
-  const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
-  const authUrl = new URL(`${HUB_URL}/api/oauth/authorize`);
-  authUrl.searchParams.set('response_type', 'code');
-  authUrl.searchParams.set('client_id', APP_ID);
-  authUrl.searchParams.set('redirect_uri', redirectUri);
-  authUrl.searchParams.set('code_challenge', codeChallenge);
-  authUrl.searchParams.set('code_challenge_method', 'S256');
-  authUrl.searchParams.set('state', state);
-  authUrl.searchParams.set('scope', 'profile');
+  if (user) {
+    user.hubUserId = hubUserId;
+    user.name = hubUser.name || user.name;
+    if (hubUser.avatar && hubUser.avatar.startsWith('https://')) {
+      user.avatar = hubUser.avatar;
+    }
+    user.authMethod = 'sso';
+    user.lastLogin = new Date();
+    await user.save();
+  } else {
+    user = await User.create({
+      hubUserId,
+      email,
+      name: hubUser.name || email.split('@')[0],
+      avatar: hubUser.avatar?.startsWith('https://') ? hubUser.avatar : null,
+      authMethod: 'sso',
+      lastLogin: new Date()
+    });
+  }
 
-  res.redirect(authUrl.toString());
-});
+  return user;
+}
 
 /**
- * GET /api/auth/callback
- * OAuth callback - exchange code for tokens
+ * Create session and return tokens + user
  */
-router.get('/callback', async (req, res) => {
+async function createSessionAndRespond(user, req, res) {
+  const accessToken = generateToken(user._id);
+  const refreshToken = crypto.randomBytes(64).toString('hex');
+
+  await Session.create({
+    userId: user._id,
+    refreshTokenHash: hashRefreshToken(refreshToken),
+    userAgent: req.headers['user-agent'],
+    ipAddress: req.ip,
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  });
+
+  res.json({
+    accessToken,
+    refreshToken,
+    user: {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      role: user.role
+    }
+  });
+}
+
+/**
+ * POST /api/auth/login
+ * Proxy email/password login to Hub
+ */
+router.post('/login', async (req, res) => {
   try {
-    const { code, state, error } = req.query;
-
-    if (error) {
-      console.error('OAuth error from Hub:', error);
-      return res.redirect(`/?auth_error=${encodeURIComponent(error)}`);
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email et mot de passe requis' });
     }
 
-    // Validate state and get verifier (atomic findOneAndDelete)
-    const pkceData = await PkceState.findOneAndDelete({
-      state,
-      expiresAt: { $gt: new Date() }
-    });
-    if (!pkceData) {
-      return res.redirect('/?auth_error=invalid_state');
-    }
-
-    // Exchange code for tokens
-    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
-    const tokenResponse = await fetch(`${HUB_URL}/api/oauth/token`, {
+    const hubRes = await fetch(`${HUB_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: redirectUri,
-        client_id: APP_ID,
-        code_verifier: pkceData.codeVerifier
-      })
+      body: JSON.stringify({ email, password })
     });
 
-    if (!tokenResponse.ok) {
-      const err = await tokenResponse.json().catch(() => ({}));
-      console.error('Token exchange failed:', err);
-      return res.redirect('/?auth_error=token_exchange_failed');
-    }
+    const hubData = await hubRes.json();
 
-    const { access_token, id_token } = await tokenResponse.json();
-
-    // Verify id_token with APP_SECRET
-    if (!APP_SECRET) {
-      console.error('APP_SECRET not configured — cannot verify id_token');
-      return res.redirect('/?auth_error=config_error');
-    }
-
-    let hubUser;
-    try {
-      hubUser = jwt.verify(id_token, APP_SECRET);
-    } catch (err) {
-      console.error('id_token verification failed:', err.message);
-      return res.redirect('/?auth_error=token_verification_failed');
-    }
-
-    // Validate avatar URL (only https allowed)
-    let avatar = hubUser.picture || hubUser.avatar || null;
-    if (avatar && !avatar.startsWith('https://')) {
-      avatar = null;
-    }
-
-    // Find or create local user (migration by email for existing users)
-    let user = await User.findOne({
-      $or: [{ hubUserId: hubUser.sub }, { email: hubUser.email }]
-    });
-
-    if (user) {
-      user.hubUserId = hubUser.sub;
-      user.name = hubUser.name || user.name;
-      user.avatar = avatar || user.avatar;
-      user.authMethod = 'sso';
-      user.lastLogin = new Date();
-      await user.save();
-    } else {
-      user = await User.create({
-        hubUserId: hubUser.sub,
-        email: hubUser.email,
-        name: hubUser.name || hubUser.email.split('@')[0],
-        avatar,
-        authMethod: 'sso',
-        lastLogin: new Date()
+    if (!hubRes.ok) {
+      return res.status(hubRes.status).json({
+        error: hubData.error || 'Identifiants incorrects',
+        code: hubData.code
       });
     }
 
-    // Generate app tokens
-    const appAccessToken = generateToken(user._id);
-    const refreshToken = crypto.randomBytes(64).toString('hex');
-
-    // Store session with hashed refresh token
-    await Session.create({
-      userId: user._id,
-      refreshTokenHash: hashRefreshToken(refreshToken),
-      userAgent: req.headers['user-agent'],
-      ipAddress: req.ip,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    });
-
-    // Generate one-time auth code (not tokens in URL)
-    const authCode = crypto.randomBytes(32).toString('hex');
-    await AuthCode.create({
-      code: authCode,
-      accessToken: appAccessToken,
-      refreshToken,
-      userId: user._id,
-      expiresAt: new Date(Date.now() + 30 * 1000) // 30 seconds TTL
-    });
-
-    // Redirect with auth code
-    const returnUrl = new URL(pkceData.returnUrl, `${req.protocol}://${req.get('host')}`);
-    returnUrl.searchParams.set('auth_code', authCode);
-
-    res.redirect(returnUrl.toString());
+    const user = await findOrCreateUser(hubData.user);
+    await createSessionAndRespond(user, req, res);
 
   } catch (error) {
-    console.error('OAuth callback error:', error);
-    res.redirect('/?auth_error=internal_error');
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Erreur de connexion' });
   }
 });
 
 /**
- * POST /api/auth/exchange
- * Exchange a one-time auth code for tokens
+ * POST /api/auth/register
+ * Proxy registration to Hub
  */
-router.post('/exchange', async (req, res) => {
+router.post('/register', async (req, res) => {
   try {
-    const { authCode } = req.body;
-
-    if (!authCode) {
-      return res.status(400).json({ error: 'Auth code requis' });
+    const { email, name, password } = req.body;
+    if (!email || !name) {
+      return res.status(400).json({ error: 'Email et nom requis' });
     }
 
-    // Atomic findOneAndDelete: one-time use
-    const codeData = await AuthCode.findOneAndDelete({
-      code: authCode,
-      expiresAt: { $gt: new Date() }
+    const hubRes = await fetch(`${HUB_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, password })
     });
 
-    if (!codeData) {
-      return res.status(401).json({ error: 'Code invalide ou expiré' });
+    const hubData = await hubRes.json();
+
+    if (!hubRes.ok) {
+      return res.status(hubRes.status).json({
+        error: hubData.error || 'Erreur lors de la création du compte'
+      });
     }
 
-    const user = await User.findById(codeData.userId);
-    if (!user) {
-      return res.status(401).json({ error: 'Utilisateur introuvable' });
+    // If Hub returned tokens (password registration), create local user
+    if (hubData.accessToken && hubData.user) {
+      const user = await findOrCreateUser(hubData.user);
+      return await createSessionAndRespond(user, req, res);
     }
 
-    res.json({
-      accessToken: codeData.accessToken,
-      refreshToken: codeData.refreshToken,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        role: user.role
-      }
+    // Magic link registration (no password) — Hub sends email
+    res.status(201).json({
+      message: hubData.message || 'Compte créé. Vérifiez votre email.',
+      user: hubData.user
     });
+
   } catch (error) {
-    console.error('Auth code exchange error:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'échange du code' });
+    console.error('Register error:', error);
+    res.status(500).json({ error: 'Erreur lors de l\'inscription' });
+  }
+});
+
+/**
+ * POST /api/auth/google
+ * Proxy Google OAuth to Hub
+ */
+router.post('/google', async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ error: 'ID token requis' });
+    }
+
+    const hubRes = await fetch(`${HUB_URL}/api/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken })
+    });
+
+    const hubData = await hubRes.json();
+
+    if (!hubRes.ok) {
+      return res.status(hubRes.status).json({
+        error: hubData.error || 'Erreur de connexion Google'
+      });
+    }
+
+    const user = await findOrCreateUser(hubData.user);
+    await createSessionAndRespond(user, req, res);
+
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({ error: 'Erreur de connexion Google' });
+  }
+});
+
+/**
+ * POST /api/auth/magic-link
+ * Request magic link via Hub
+ */
+router.post('/magic-link', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email requis' });
+    }
+
+    const hubRes = await fetch(`${HUB_URL}/api/auth/magic-link`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        app: APP_ID,
+        redirect: `https://ai-builder.swigs.online`
+      })
+    });
+
+    const hubData = await hubRes.json();
+
+    if (!hubRes.ok) {
+      return res.status(hubRes.status).json({
+        error: hubData.error || 'Erreur d\'envoi du magic link'
+      });
+    }
+
+    res.json({ message: 'Si un compte existe, un lien de connexion a été envoyé.' });
+
+  } catch (error) {
+    console.error('Magic link error:', error);
+    res.status(500).json({ error: 'Erreur d\'envoi du magic link' });
+  }
+});
+
+/**
+ * POST /api/auth/sso-callback
+ * Verify SSO token from Hub (for magic link returns)
+ */
+router.post('/sso-callback', async (req, res) => {
+  try {
+    const { ssoToken } = req.body;
+    if (!ssoToken) {
+      return res.status(400).json({ error: 'SSO token requis' });
+    }
+
+    if (!APP_SECRET) {
+      return res.status(500).json({ error: 'Configuration serveur incomplète' });
+    }
+
+    const hubRes = await fetch(`${HUB_URL}/api/auth/sso-verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-App-Secret': APP_SECRET
+      },
+      body: JSON.stringify({ ssoToken, appId: APP_ID })
+    });
+
+    const hubData = await hubRes.json();
+
+    if (!hubRes.ok) {
+      return res.status(hubRes.status).json({
+        error: hubData.error || 'SSO token invalide'
+      });
+    }
+
+    const hubUser = hubData.user;
+    const user = await findOrCreateUser({
+      id: hubUser.hubId || hubUser.id,
+      email: hubUser.email,
+      name: hubUser.name,
+      avatar: hubUser.avatar
+    });
+
+    await createSessionAndRespond(user, req, res);
+
+  } catch (error) {
+    console.error('SSO callback error:', error);
+    res.status(500).json({ error: 'Erreur de vérification SSO' });
   }
 });
 
@@ -246,7 +291,6 @@ const refreshLimiter = rateLimit({
 router.post('/refresh', refreshLimiter, async (req, res) => {
   try {
     const { refreshToken } = req.body;
-
     if (!refreshToken) {
       return res.status(400).json({ error: 'Refresh token requis' });
     }
@@ -267,7 +311,7 @@ router.post('/refresh', refreshLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Utilisateur invalide' });
     }
 
-    // Token rotation: revoke old session and create new one
+    // Token rotation
     session.isRevoked = true;
     await session.save();
 
@@ -302,7 +346,6 @@ router.post('/refresh', refreshLimiter, async (req, res) => {
 
 /**
  * GET /api/auth/me
- * Retourne l'utilisateur connecté
  */
 router.get('/me', requireAuth, async (req, res) => {
   res.json({
@@ -319,12 +362,10 @@ router.get('/me', requireAuth, async (req, res) => {
 
 /**
  * POST /api/auth/logout
- * Révoque la session
  */
 router.post('/logout', async (req, res) => {
   try {
     const { refreshToken } = req.body;
-
     if (refreshToken) {
       const tokenHash = hashRefreshToken(refreshToken);
       await Session.updateOne(
@@ -332,7 +373,6 @@ router.post('/logout', async (req, res) => {
         { isRevoked: true }
       );
     }
-
     res.json({ message: 'Déconnecté' });
   } catch (error) {
     console.error('Logout error:', error);
