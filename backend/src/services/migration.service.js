@@ -16,7 +16,15 @@ function normalizeAnalysis(analysisResult) {
   const info = a.extractedInfo || a;
   const brief = a.creativeBrief || {};
   const seo = a.seo || info.seo || {};
-  const colors = info.detectedColors || info.colors || brief.colors || {};
+  const rawColors = info.detectedColors || info.colors || brief.colors || {};
+  // Filter out useless black/white/near-black colors
+  const useless = new Set(['#000000', '#000', '#ffffff', '#fff', '#111111', '#0f0f0f', '#fefefe']);
+  const ok = (c) => c && !useless.has(c.toLowerCase());
+  const colors = {
+    primary: ok(rawColors.primary) ? rawColors.primary : (ok(rawColors.mainColor) ? rawColors.mainColor : null),
+    secondary: ok(rawColors.secondary) ? rawColors.secondary : (ok(rawColors.backgroundColor) ? rawColors.backgroundColor : null),
+    accent: ok(rawColors.accent) ? rawColors.accent : (ok(rawColors.accentColor) ? rawColors.accentColor : null),
+  };
 
   return {
     businessName: info.businessName || '',
@@ -33,9 +41,10 @@ function normalizeAnalysis(analysisResult) {
       description: s.description || s.shortDescription || '',
     })),
     colors: {
-      primary: colors.primary || colors.mainColor || '#12203e',
-      secondary: colors.secondary || colors.backgroundColor || '#1a1a1a',
-      accent: colors.accent || colors.accentColor || '#c8a97e',
+      primary: colors.primary || null,
+      secondary: colors.secondary || null,
+      accent: colors.accent || null,
+      _detected: !!(colors.primary || colors.secondary || colors.accent),
     },
     detectedSections: info.detectedSections || brief.suggestedSections || [],
     seo: {
@@ -65,9 +74,10 @@ function normalizeScrapedData(scraped) {
       description: '',
     })),
     colors: {
-      primary: scraped.colors?.[0] || '#12203e',
-      secondary: scraped.colors?.[1] || '#1a1a1a',
-      accent: scraped.colors?.[2] || '#c8a97e',
+      primary: scraped.colors?.[0] || null,
+      secondary: scraped.colors?.[1] || null,
+      accent: scraped.colors?.[2] || null,
+      _detected: !!(scraped.colors?.length),
     },
     detectedSections: ['hero', 'description', 'services-grid', 'contact'],
     seo: {

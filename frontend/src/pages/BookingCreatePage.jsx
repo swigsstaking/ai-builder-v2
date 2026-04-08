@@ -114,13 +114,12 @@ export default function BookingCreatePage() {
             }
           }
 
-          // Extract colors from migration
-          if (ec.colors) {
-            const c = ec.colors;
+          // Extract colors from migration (only if real colors were detected)
+          if (ec.colors?._detected && ec.colors.primary) {
             setCustomColors({
-              primary: c.primary || c.mainColor || '#0ea5e9',
-              secondary: c.secondary || c.backgroundColor || '#0f172a',
-              accent: c.accent || c.accentColor || '#f59e0b',
+              primary: ec.colors.primary,
+              secondary: ec.colors.secondary || '#0f172a',
+              accent: ec.colors.accent || '#f59e0b',
             });
             setColorMode('custom');
           }
