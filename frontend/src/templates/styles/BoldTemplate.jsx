@@ -712,7 +712,7 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
       showBookingWidget && (
         <section
           key="booking-widget"
-          id="booking-widget"
+          id="booking"
           data-section="booking-widget"
           className={`${isMobile ? 'py-20 px-6' : 'py-32 px-12'}`}
           style={{ backgroundColor: secondary }}
@@ -730,7 +730,7 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
             {bookingWidgetData.calendarSlug ? (
               <div className="border-2 border-white/10 overflow-hidden">
                 <iframe
-                  src={`https://cal.com/${bookingWidgetData.calendarSlug}`}
+                  src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}`}
                   width="100%"
                   height="600"
                   style={{ border: 0 }}

@@ -4,7 +4,7 @@ import { ChevronUp, Upload, X, Calendar, Palette, Check, Globe, Loader } from 'l
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import useSiteStore from '../stores/siteStore';
-import { pagesApi, aiApi, buildApi, mediaApi, migrationApi, sitesApi } from '../services/api';
+import { pagesApi, aiApi, buildApi, mediaApi, migrationApi, sitesApi, calendarApi } from '../services/api';
 import { mapBookingAiContentToSections, distributeImagesToSections } from '../lib/aiPageBuilder';
 import CreateProgressModal from '../components/CreateProgressModal';
 import DesignStyleSelector, { DESIGN_STYLES } from '../components/DesignStyleSelector';
@@ -194,6 +194,7 @@ export default function BookingCreatePage() {
     if (googleMapsUrl.trim()) steps.push({ key: 'reviews', label: 'Import des avis Google', icon: 'Star' });
     steps.push({ key: 'page', label: 'Création de la page booking', icon: 'FileText' });
     steps.push({ key: 'ai', label: 'IA — Génération du contenu', icon: 'Sparkles' });
+    steps.push({ key: 'calendar', label: 'Configuration de l\'agenda', icon: 'Calendar' });
     steps.push({ key: 'seo', label: 'Optimisation SEO', icon: 'Search' });
     steps.push({ key: 'build', label: 'Construction du site', icon: 'Hammer' });
     steps.push({ key: 'done', label: 'Site prêt !', icon: 'CheckCircle' });
@@ -264,7 +265,56 @@ export default function BookingCreatePage() {
         toast.error('Erreur lors de la génération IA');
       }
 
-      // 5. SEO
+      // 5. Calendar setup — create BookingProfile + push services
+      advance('calendar');
+      let calendarSlug = '';
+      try {
+        // Generate slug from practitioner name
+        const slugBase = practitionerName.trim().toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        // Create BookingProfile
+        const profile = await calendarApi.createBookingProfile({
+          slug: slugBase,
+          businessName: practitionerName.trim(),
+          description: `${effectiveSpecialty.trim()}${city.trim() ? ` à ${city.trim()}` : ''}`,
+          branding: { primaryColor: selectedPalette.primary },
+          bookingSettings: { autoConfirm: true, slotInterval: 30 },
+        });
+        calendarSlug = profile.slug || slugBase;
+
+        // Push AI-generated services to Calendar
+        const { page: updatedPage } = await pagesApi.getOne(page._id);
+        const svcSection = updatedPage.sections?.find(s => s.type === 'services-booking');
+        const aiServices = svcSection?.data?.services || [];
+        for (const svc of aiServices) {
+          try {
+            await calendarApi.createService({
+              name: svc.name,
+              description: svc.description || '',
+              duration: parseInt(svc.duration) || 60,
+              price: parseFloat(svc.price) || null,
+              currency: 'CHF',
+            });
+          } catch (e) { console.warn('[Calendar] Service creation failed:', svc.name, e.message); }
+        }
+
+        // Inject slug into booking-widget section
+        const freshPage = await pagesApi.getOne(page._id);
+        const sections = freshPage.page.sections.map(s =>
+          s.type === 'booking-widget' ? { ...s, data: { ...s.data, calendarSlug } } : s
+        );
+        await pagesApi.updateSections(page._id, sections);
+
+        // Also save calendarSlug on the page
+        await pagesApi.update(page._id, { calendarSlug });
+      } catch (err) {
+        console.warn('[Calendar] Setup failed:', err.message);
+        // Non-blocking — the site still works without Calendar
+      }
+
+      // 6. SEO
       try { advance('seo'); await aiApi.optimizeSeo(site._id); } catch (err) { console.warn('[SEO] failed:', err.message); }
 
       // 6. Build
