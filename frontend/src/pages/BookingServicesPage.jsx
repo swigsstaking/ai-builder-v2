@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import { Plus, Pencil, Trash2, X, Clock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { calendarApi } from '../services/api';
+import { calendarApi, pagesApi } from '../services/api';
 
 const CURRENCIES = [
   { value: 'CHF', label: 'CHF' },
@@ -22,12 +23,42 @@ const emptyForm = {
 };
 
 export default function BookingServicesPage() {
+  const { siteId } = useParams();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+
+  // Sync Calendar services → page services-booking section
+  const syncServicesToPage = useCallback(async (calendarServices) => {
+    if (!siteId) return;
+    try {
+      const { pages } = await pagesApi.getBySite(siteId);
+      const bookingPage = pages.find(p => p.type === 'booking');
+      if (!bookingPage) return;
+
+      const sections = bookingPage.sections.map(s => {
+        if (s.type !== 'services-booking') return s;
+        return {
+          ...s,
+          data: {
+            ...s.data,
+            services: calendarServices.filter(svc => svc.isActive !== false).map(svc => ({
+              name: svc.name,
+              description: svc.description || '',
+              duration: `${svc.duration} min`,
+              price: svc.price != null ? `${svc.price} ${svc.currency || 'CHF'}` : '',
+            })),
+          },
+        };
+      });
+      await pagesApi.updateSections(bookingPage._id, sections);
+    } catch (err) {
+      console.warn('[Sync] Failed to sync services to page:', err.message);
+    }
+  }, [siteId]);
 
   const fetchServices = async () => {
     try {
@@ -87,18 +118,22 @@ export default function BookingServicesPage() {
 
     setSaving(true);
     try {
+      let newServices;
       if (editingService) {
         const res = await calendarApi.updateService(editingService._id, data);
         const updated = res.service || res;
-        setServices(prev => prev.map(s => s._id === editingService._id ? updated : s));
+        newServices = services.map(s => s._id === editingService._id ? updated : s);
+        setServices(newServices);
         toast.success('Prestation modifiée');
       } else {
         const res = await calendarApi.createService(data);
         const created = res.service || res;
-        setServices(prev => [...prev, created]);
+        newServices = [...services, created];
+        setServices(newServices);
         toast.success('Prestation créée');
       }
       setShowModal(false);
+      syncServicesToPage(newServices);
     } catch (err) {
       toast.error(err?.error || err?.message || 'Erreur lors de la sauvegarde');
     } finally {
@@ -110,8 +145,10 @@ export default function BookingServicesPage() {
     if (!confirm(`Supprimer la prestation "${service.name}" ?`)) return;
     try {
       await calendarApi.deleteService(service._id);
-      setServices(prev => prev.filter(s => s._id !== service._id));
+      const newServices = services.filter(s => s._id !== service._id);
+      setServices(newServices);
       toast.success('Prestation supprimée');
+      syncServicesToPage(newServices);
     } catch (err) {
       toast.error(err?.error || 'Erreur lors de la suppression');
     }

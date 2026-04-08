@@ -285,6 +285,8 @@ export async function renderPage(site, page, options = {}) {
       secondary: site.design?.secondaryColor || '#1e293b',
       accent: site.design?.accentColor || '#f59e0b',
     },
+    googleReviewRating: site.business?.googleReviewRating || null,
+    googleReviewCount: site.business?.googleReviewCount || null,
   };
 
   // Render React component to string

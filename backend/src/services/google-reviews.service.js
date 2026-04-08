@@ -49,7 +49,7 @@ export async function fetchReviews(placeId) {
     params: { languageCode: 'fr' },
     headers: {
       'X-Goog-Api-Key': API_KEY,
-      'X-Goog-FieldMask': 'reviews,rating,userRatingCount,googleMapsUri',
+      'X-Goog-FieldMask': 'reviews,rating,userRatingCount,googleMapsUri,formattedAddress,displayName',
     },
     timeout: 10000,
   });
@@ -70,6 +70,8 @@ export async function fetchReviews(placeId) {
     rating: data.rating || null,
     totalReviews: data.userRatingCount || 0,
     googleMapsUri: data.googleMapsUri || '',
+    formattedAddress: data.formattedAddress || '',
+    displayName: data.displayName?.text || '',
   };
 }
 

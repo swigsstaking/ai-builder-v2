@@ -613,6 +613,26 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
                 {heroPractitionerData.specialty}
               </p>
             )}
+            {site.googleReviewRating && (
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <Star
+                      key={i}
+                      className="w-4 h-4"
+                      style={{
+                        color: i <= Math.round(site.googleReviewRating) ? '#fbbf24' : 'rgba(255,255,255,0.2)',
+                        fill: i <= Math.round(site.googleReviewRating) ? '#fbbf24' : 'none',
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-white/80 text-sm font-medium">{site.googleReviewRating}</span>
+                {site.googleReviewCount && (
+                  <span className="text-white/50 text-sm">— {site.googleReviewCount} avis</span>
+                )}
+              </div>
+            )}
             {heroPractitionerData.tagline && (
               <p
                 data-editable="tagline"

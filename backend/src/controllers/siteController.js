@@ -109,6 +109,7 @@ export const fetchGoogleReviews = async (req, res, next) => {
     if (result.rating) site.business.googleReviewRating = result.rating;
     if (result.totalReviews) site.business.googleReviewCount = result.totalReviews;
     if (result.googleMapsUri) site.business.googleReviewUrl = result.googleMapsUri;
+    if (result.formattedAddress) site.business.address = result.formattedAddress;
     site.markModified('business');
     await site.save();
 
@@ -118,6 +119,12 @@ export const fetchGoogleReviews = async (req, res, next) => {
       for (const page of pages) {
         let modified = false;
         for (const section of page.sections) {
+          // Update contact section with precise address from Google
+          if (section.type === 'contact' && result.formattedAddress) {
+            section.data.address = result.formattedAddress;
+            section.data.embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(result.formattedAddress)}&output=embed`;
+            modified = true;
+          }
           if (section.type === 'google-reviews') {
             const existing = section.data?.testimonials || [];
             // Keep AI reviews, replace Google reviews
@@ -128,6 +135,8 @@ export const fetchGoogleReviews = async (req, res, next) => {
             section.data.rating = result.rating;
             section.data.ctaUrl = result.googleMapsUri || site.business.googleReviewUrl || '';
             section.data.ctaText = `Voir nos ${result.totalReviews}+ avis`;
+            // Auto-enable section when reviews are found
+            if (result.reviews.length > 0) section.visible = true;
             modified = true;
           }
         }
