@@ -1,103 +1,140 @@
 # Prompt pour la prochaine session
 
 ```
-Lis le fichier tasks/session-2026-04-08-sso.md pour le contexte complet.
+Lis les fichiers tasks/session-2026-04-08-sso.md et tasks/session-2026-04-08-booking-brief.md pour le contexte complet.
 
-## Mission : Migrer l'auth AI Builder vers le SSO Hub SWIGS
+## Mission : Implémenter la page de réservation (booking) + intégration Calendar
 
 ### Contexte
-AI Builder est un SaaS de création de sites web via IA. Le backend tourne sur 192.168.110.59 (PM2 ai-builder-v2, port 4005), le frontend sur https://ai-builder.swigs.online. Le code source est sur GitHub : github.com/swigsstaking/ai-builder-v2. SSH: user swigs, sudo password Labo. Login app: admin@swigs.online / Admin123!.
+AI Builder est un SaaS de création de sites web via IA. L'auth SSO Hub est en place — les users ont un hubUserId qui les lie à toutes les apps SWIGS (Calendar, Workflow, etc.).
 
-L'auth actuelle est locale (email/password + Google OAuth). Il faut migrer vers le SSO Hub SWIGS (apps.swigs.online, port 3006) pour que les JWT fonctionnent cross-service avec swigs-calendar (port 3008) et les autres apps SWIGS.
+Backend : 192.168.110.59 (PM2 ai-builder-v2, port 4005)
+Frontend : https://ai-builder.swigs.online
+GitHub : github.com/swigsstaking/ai-builder-v2
+SSH : user swigs, sudo password Labo
+Login : admin@swigs.online / Admin123!
+Calendar API : même serveur, port 3008 (calendar.swigs.online)
 
 ### Ce qui est déjà fait
-- Google OAuth fonctionne (bouton sur login + register)
-- Inscription publique fonctionne (route /register)
-- Le guide SSO est lu et compris (voir SSO_INTEGRATION_PROMPT.md dans /CascadeProjects/swigs-workflow/)
+- SSO Hub intégré (login/register/google/magic-link proxiés vers le Hub)
+- JWT aligné { userId }, refresh token avec rotation, sessions en DB
+- Users ont hubUserId pour le cross-service
+- 5 templates (Modern, Bold, Elegant, Minimal, Artistic) fonctionnels
+- Création de sites avec IA (homepage + contact)
+- Migration de sites existants via OCR (deepseek-ocr + qwen3.5)
 
-### Ce qu'il faut faire (dans l'ordre)
+### Architecture décidée
 
-#### 1. Enregistrer AI Builder dans le Hub (config)
-- Fichier : /home/swigs/swigs-hub/backend/src/config/apps.js (sur le serveur .59 via SSH)
-- Ajouter l'entrée 'ai-builder' dans registeredApps (voir les entrées existantes comme modèle)
-- Générer un APP_SECRET : openssl rand -hex 32
-- Ajouter APP_SECRET_AI_BUILDER=xxx dans /home/swigs/swigs-hub/backend/.env
-- pm2 restart swigs-hub
+Calendar = moteur backend (disponibilités, widget iframe, emails)
+AI Builder = interface unique pour le praticien
 
-#### 2. Configurer AI Builder .env
-- Ajouter au .env du serveur (/home/swigs/ai-builder-v2-backend/.env) :
-  HUB_URL=https://apps.swigs.online
-  APP_ID=ai-builder
-  APP_SECRET=<même valeur que APP_SECRET_AI_BUILDER>
+Le praticien ne quitte JAMAIS AI Builder. Les API Calendar sont appelées en proxy via le backend AI Builder.
 
-#### 3. Backend : Créer les modèles OAuthState et Session
-- Copier le pattern de Calendar (/home/swigs/swigs-calendar/backend/src/models/)
-  - OAuthState.js : PkceState (state, codeVerifier, returnUrl, expiresAt) + AuthCode (code, accessToken, refreshToken, userId, expiresAt)
-  - Session.js : userId, refreshTokenHash, userAgent, ipAddress, expiresAt, isRevoked
+### Ce qu'il faut implémenter
 
-#### 4. Backend : Modifier le modèle User
-- Ajouter : hubUserId (String, unique, sparse)
-- Garder : googleId, avatar, authMethod, password (pour backward compat pendant migration)
+#### Phase A : Template page booking
 
-#### 5. Backend : Réécrire les routes auth
-- Copier le pattern exact de Calendar (/home/swigs/swigs-calendar/backend/src/routes/auth.js)
-- Routes à implémenter :
-  - GET /api/auth/login → PKCE flow (génère state+verifier, redirige vers Hub)
-  - GET /api/auth/callback → échange code contre tokens, find-or-create user, redirige avec auth_code
-  - POST /api/auth/exchange → échange auth_code one-time contre accessToken + refreshToken
-  - POST /api/auth/refresh → rotation de refresh token
-  - GET /api/auth/me → infos user connecté
-  - POST /api/auth/logout → révoque session
-- IMPORTANT : le JWT Calendar utilise { userId }, AI Builder actuel utilise { id }. Aligner sur { userId } pour compatibilité cross-service.
+1. Nouveau type de page "booking" dans le modèle Page (ajouter à l'enum type)
+2. Sections du template booking :
+   - hero-practitioner : photo portrait, nom, titre/spécialité, accroche
+   - services-booking : prestations avec durée + prix (données éditoriales)
+   - about : bio, parcours, diplômes
+   - booking-widget : iframe calendar.swigs.online/book/{slug} (champ de config : calendarSlug)
+   - testimonials : avis clients (optionnel)
+   - contact : coordonnées, carte Google Maps, horaires
+3. Renderers dans les 5 templates (frontend + backend = 10 fichiers)
+4. Sections par défaut dans pageController pour type "booking"
 
-#### 6. Backend : Modifier le middleware auth
-- requireAuth doit chercher decoded.userId (pas decoded.id)
-- generateToken doit signer avec { userId } (pas { id })
+#### Phase B : Flow de création "Page de réservation"
 
-#### 7. Frontend : Adapter le login
-- Supprimer le formulaire email/password local (remplacé par le SSO)
-- Garder Google OAuth (le Hub le gère aussi)
-- Le bouton "Se connecter" redirige vers /api/auth/login (qui lance le flow PKCE)
-- Le retour du callback ajoute ?auth_code=xxx à l'URL
-- Le frontend détecte le auth_code dans l'URL et appelle POST /api/auth/exchange
-- Stocker accessToken + refreshToken dans localStorage
-- L'auth store gère le refresh automatique
+1. 3ème option sur le dashboard /dashboard/new : "Page de réservation"
+2. Flow simplifié : nom + spécialité + (URL optionnelle) + (description optionnelle)
+3. Crée un Site one-pager avec 1 Page type "booking"
+4. L'IA génère le contenu adapté au métier du praticien
+5. Si URL fournie : utilise le pipeline OCR existant pour extraire nom, bio, prestations
 
-#### 8. Frontend : Auth store refactoring
-- Remplacer le login local par loginWithHub() → window.location = /api/auth/login
-- Ajouter exchangeAuthCode(code) → POST /api/auth/exchange
-- Ajouter refreshAccessToken() → POST /api/auth/refresh
-- Le token stocké dans localStorage change de aibuilder_token à aibuilder_access_token + aibuilder_refresh_token
+#### Phase C : Proxy API Calendar
 
-### Fichiers de référence (à lire sur le serveur .59 via SSH)
-- Calendar auth routes : /home/swigs/swigs-calendar/backend/src/routes/auth.js (467 lignes, implémentation complète PKCE)
-- Calendar OAuthState model : /home/swigs/swigs-calendar/backend/src/models/OAuthState.js
-- Calendar Session model : /home/swigs/swigs-calendar/backend/src/models/Session.js
-- Calendar auth middleware : /home/swigs/swigs-calendar/backend/src/middleware/auth.js
-- Hub apps registry : /home/swigs/swigs-hub/backend/src/config/apps.js
-- Hub .env : /home/swigs/swigs-hub/backend/.env
-- Guide SSO complet : /Users/corentinflaction/CascadeProjects/swigs-workflow/SSO_INTEGRATION_PROMPT.md
+Le backend AI Builder expose des routes /api/calendar/* qui proxient vers calendar.swigs.online :
 
-### Fichiers AI Builder à modifier
+1. Routes proxy :
+   - GET/POST/PUT/DELETE /api/calendar/services → /api/services
+   - GET/POST/PUT /api/calendar/booking-profile → /api/booking-profile
+   - PATCH /api/calendar/preferences → /api/auth/preferences
+   - GET /api/calendar/bookings → /api/bookings
+   - PATCH /api/calendar/bookings/:id/cancel → /api/bookings/:id/cancel
+   - PATCH /api/calendar/bookings/:id/complete → /api/bookings/:id/complete
+
+2. Auth : Le proxy utilise le hubUserId de l'utilisateur connecté pour s'authentifier auprès de Calendar. Calendar et AI Builder partagent la même auth Hub, donc :
+   - Option 1 : AI Builder génère un JWT signé avec un service secret partagé contenant le hubUserId → Calendar le vérifie
+   - Option 2 : AI Builder forward le même JWT (si même JWT_SECRET) → vérifier si les JWT_SECRET sont identiques
+   - À vérifier : grep JWT_SECRET dans les .env de ai-builder et calendar sur le serveur
+
+3. Création automatique du BookingProfile : quand le praticien crée sa première page booking, AI Builder appelle POST /api/booking-profile avec { slug, businessName }
+
+#### Phase D : Onglet "Réservations" dans la sidebar
+
+Quand un site a une page de type "booking", un onglet apparaît dans la sidebar :
+- Prestations : CRUD (nom, durée, prix, buffer, description) — appelle proxy /api/calendar/services
+- Horaires : config par jour (lun-dim, heures début/fin) — appelle proxy /api/calendar/preferences
+- Rendez-vous : liste RDV à venir avec actions annuler/terminer — appelle proxy /api/calendar/bookings
+
+3 nouvelles pages frontend :
+- frontend/src/pages/BookingServicesPage.jsx
+- frontend/src/pages/BookingSchedulePage.jsx
+- frontend/src/pages/BookingAppointmentsPage.jsx
+
+Ajout dans la sidebar conditionnelle (Layout.jsx) + routes dans App.jsx.
+
+#### Phase E : Page booking ajoutée à un site existant
+
+Dans le modal "Ajouter des pages" (CreatePageModal.jsx), ajouter le type "Réservation" dans le dropdown. Quand sélectionné, crée la page avec les sections booking par défaut et propose de configurer le slug calendar.
+
+### Ordre de priorité
+Phase A (template) → Phase B (flow création) → Phase C (proxy) → Phase D (onglet) → Phase E (ajout à existant)
+
+Les phases A et B sont indépendantes de Calendar. Les phases C-D-E nécessitent le proxy.
+
+### Fichiers clés à modifier
+
 Backend :
-- backend/src/models/User.js — ajouter hubUserId
-- backend/src/models/OAuthState.js — nouveau (PkceState + AuthCode)
-- backend/src/models/Session.js — nouveau
-- backend/src/routes/auth.js — réécrire (PKCE flow)
-- backend/src/controllers/authController.js — adapter ou supprimer
-- backend/src/middleware/auth.js — aligner sur { userId }
+- backend/src/models/Page.js — ajouter "booking" au type enum
+- backend/src/controllers/pageController.js — DEFAULT_BOOKING_SECTIONS
+- backend/src/services/ai.service.js — generateBookingPageContent()
+- backend/src/routes/calendar.js — NOUVEAU : proxy routes vers Calendar
+- backend/server.js — monter les routes /api/calendar
 
 Frontend :
-- frontend/src/stores/authStore.js — refactoring complet (Hub SSO)
-- frontend/src/pages/LoginPage.jsx — redirection Hub
-- frontend/src/pages/RegisterPage.jsx — redirection Hub
-- frontend/src/services/api.js — adapter intercepteur token
-- frontend/src/App.jsx — détecter auth_code dans URL
+- frontend/src/templates/styles/*.jsx (10 fichiers) — renderers booking sections
+- frontend/src/pages/SiteCreatePage.jsx — 3ème option "Page de réservation"
+- frontend/src/pages/BookingCreatePage.jsx — NOUVEAU : flow création one-pager
+- frontend/src/pages/BookingServicesPage.jsx — NOUVEAU : CRUD prestations
+- frontend/src/pages/BookingSchedulePage.jsx — NOUVEAU : config horaires
+- frontend/src/pages/BookingAppointmentsPage.jsx — NOUVEAU : liste RDV
+- frontend/src/components/Layout.jsx — onglet conditionnel dans sidebar
+- frontend/src/App.jsx — nouvelles routes
+- frontend/src/services/api.js — calendarApi
+
+### API Calendar existantes (sur port 3008)
+| Endpoint | Auth | Description |
+|----------|------|-------------|
+| GET /api/services | JWT | Liste prestations |
+| POST /api/services | JWT | Créer prestation |
+| PUT /api/services/:id | JWT | Modifier prestation |
+| DELETE /api/services/:id | JWT | Supprimer prestation |
+| GET /api/booking-profile | JWT | Profil de réservation |
+| POST /api/booking-profile | JWT | Créer profil (slug + businessName) |
+| PUT /api/booking-profile | JWT | Modifier profil |
+| PATCH /api/auth/preferences | JWT | Horaires de travail (workingDays) |
+| GET /api/bookings | JWT | RDV à venir |
+| PATCH /api/bookings/:id/cancel | JWT | Annuler RDV |
+| PATCH /api/bookings/:id/complete | JWT | Terminer RDV |
+| GET /api/widget/:slug | Public | Profil public + services |
 
 ### Points d'attention
-- Le backend est en PROD — ne pas casser les users existants
-- Les users existants seront migrés automatiquement par email matching au callback SSO
+- Le backend est en PROD — ne rien casser
 - Deploy via scp + pm2 restart ai-builder-v2
-- Tester avec Chrome MCP sur https://ai-builder.swigs.online/login
-- Le Hub est aussi sur .59 — attention aux restarts (pm2 restart swigs-hub)
+- Les templates backend sont utilisés pour le SSG build — chaque nouveau renderer doit exister dans frontend ET backend
+- Le proxy Calendar doit gérer les erreurs gracieusement (Calendar down, user pas de profil, etc.)
+- Tester avec Chrome MCP sur https://ai-builder.swigs.online
 ```
