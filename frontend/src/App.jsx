@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import useAuthStore from './stores/authStore';
 import Layout from './components/Layout';
 import { identifyUser, trackPageView } from './lib/posthog';
@@ -28,8 +28,8 @@ function Loader() {
 }
 
 function ProtectedRoute({ children }) {
-  const { user, loading, token } = useAuthStore();
-  if (loading || (token && !user)) return <Loader />;
+  const { user, loading, accessToken } = useAuthStore();
+  if (loading || (accessToken && !user)) return <Loader />;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
@@ -41,11 +41,39 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
-  const { token, fetchUser, loading, user } = useAuthStore();
+  const { accessToken, fetchUser, loading, user, exchangeAuthCode } = useAuthStore();
   const location = useLocation();
+  const navigate = useNavigate();
 
+  // Handle SSO auth_code from callback redirect
   useEffect(() => {
-    if (token) fetchUser();
+    const params = new URLSearchParams(location.search);
+    const authCode = params.get('auth_code');
+    const authError = params.get('auth_error');
+
+    if (authError) {
+      console.error('SSO auth error:', authError);
+      // Clean URL
+      const cleanUrl = location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+      return;
+    }
+
+    if (authCode) {
+      // Clean URL immediately
+      const cleanUrl = location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+
+      exchangeAuthCode(authCode)
+        .then(() => navigate('/dashboard', { replace: true }))
+        .catch((err) => {
+          console.error('Auth code exchange failed:', err);
+          navigate('/login', { replace: true });
+        });
+      return;
+    }
+
+    if (accessToken) fetchUser();
     else useAuthStore.setState({ loading: false });
   }, []);
 

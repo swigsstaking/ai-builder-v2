@@ -1,48 +1,20 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, ArrowLeft } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
-import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
+import { Sparkles, ArrowLeft, LogIn } from 'lucide-react';
 import useAuthStore from '../stores/authStore';
 
 const BG = '#0f0f1a';
 const CARD = '#1e1e35';
 const BORDER = 'rgba(255,255,255,0.07)';
-const INPUT_BG = '#151525';
 const GRADIENT = 'linear-gradient(135deg, #7c3aed, #3b82f6)';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, googleLogin } = useAuthStore();
-  const navigate = useNavigate();
+  const { loginWithHub } = useAuthStore();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleLogin = () => {
     setLoading(true);
-    try {
-      await login(email, password);
-      navigate('/dashboard');
-      toast.success('Connexion réussie');
-    } catch {
-      toast.error('Identifiants incorrects');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSuccess = async (response) => {
-    setLoading(true);
-    try {
-      await googleLogin(response.credential);
-      navigate('/dashboard');
-      toast.success('Connexion réussie');
-    } catch {
-      toast.error('Erreur de connexion Google');
-    } finally {
-      setLoading(false);
-    }
+    loginWithHub();
   };
 
   return (
@@ -64,45 +36,15 @@ export default function LoginPage() {
             <p className="text-gray-400 text-sm mt-1">Connectez-vous à votre espace</p>
           </div>
 
-          {/* Google Sign-In */}
-          <div className="flex justify-center mb-6">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => toast.error('Erreur Google Sign-In')}
-              theme="filled_black"
-              shape="pill"
-              size="large"
-              width="320"
-              text="signin_with"
-              locale="fr"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-gray-500 uppercase tracking-wider">ou</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
-
-          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required
-                className="w-full px-4 py-2.5 rounded-lg text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-purple-500/40 transition-shadow"
-                style={{ background: INPUT_BG, border: `1px solid rgba(255,255,255,0.1)` }} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Mot de passe</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required
-                className="w-full px-4 py-2.5 rounded-lg text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-purple-500/40 transition-shadow"
-                style={{ background: INPUT_BG, border: `1px solid rgba(255,255,255,0.1)` }} />
-            </div>
-            <button type="submit" disabled={loading}
-              className="w-full py-3 mt-2 text-white font-semibold rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
-              style={{ background: GRADIENT }}>
-              {loading ? 'Connexion...' : 'Se connecter'}
-            </button>
-          </form>
+          <button
+            onClick={handleLogin}
+            disabled={loading}
+            className="w-full py-3 text-white font-semibold rounded-lg transition-all hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: GRADIENT }}
+          >
+            <LogIn size={18} />
+            {loading ? 'Redirection...' : 'Se connecter avec SWIGS'}
+          </button>
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Pas encore de compte ?{' '}

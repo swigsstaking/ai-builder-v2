@@ -5,29 +5,72 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Track if we're currently refreshing to avoid infinite loops
+let isRefreshing = false;
+let refreshPromise = null;
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('aibuilder_token');
+  const token = localStorage.getItem('aibuilder_access_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
 api.interceptors.response.use(
   (res) => res.data,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('aibuilder_token');
-      window.location.href = '/login';
+  async (err) => {
+    const originalRequest = err.config;
+
+    // If 401 and not already retrying, attempt token refresh
+    if (err.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const refreshToken = localStorage.getItem('aibuilder_refresh_token');
+      if (!refreshToken) {
+        localStorage.removeItem('aibuilder_access_token');
+        window.location.href = '/login';
+        return Promise.reject(err.response?.data || err);
+      }
+
+      try {
+        // Deduplicate concurrent refresh calls
+        if (!isRefreshing) {
+          isRefreshing = true;
+          refreshPromise = api.post('/auth/refresh', { refreshToken });
+        }
+
+        const { accessToken: newToken, refreshToken: newRefresh } = await refreshPromise;
+        isRefreshing = false;
+        refreshPromise = null;
+
+        localStorage.setItem('aibuilder_access_token', newToken);
+        localStorage.setItem('aibuilder_refresh_token', newRefresh);
+
+        // Update auth store
+        const { default: useAuthStore } = await import('../stores/authStore');
+        useAuthStore.setState({ accessToken: newToken, refreshToken: newRefresh });
+
+        // Retry original request with new token
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } catch {
+        isRefreshing = false;
+        refreshPromise = null;
+        localStorage.removeItem('aibuilder_access_token');
+        localStorage.removeItem('aibuilder_refresh_token');
+        window.location.href = '/login';
+        return Promise.reject(err.response?.data || err);
+      }
     }
+
     return Promise.reject(err.response?.data || err);
   }
 );
 
 export const authApi = {
-  login: (data) => api.post('/auth/login', data),
-  googleLogin: (data) => api.post('/auth/google', data),
+  exchange: (data) => api.post('/auth/exchange', data),
+  refresh: (data) => api.post('/auth/refresh', data),
   getMe: () => api.get('/auth/me'),
-  register: (data) => api.post('/auth/register', data),
-  changePassword: (data) => api.post('/auth/change-password', data),
+  logout: (data) => api.post('/auth/logout', data),
 };
 
 export const sitesApi = {
