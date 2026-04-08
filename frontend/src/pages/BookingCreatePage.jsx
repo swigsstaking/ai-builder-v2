@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronUp, Upload, X, Calendar, Palette, Check, Globe, Loader } from 'lucide-react';
+import { ChevronUp, Upload, X, Calendar, Palette, Check, Globe, Loader, PenTool, Pipette } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import useSiteStore from '../stores/siteStore';
@@ -8,6 +8,7 @@ import { pagesApi, aiApi, buildApi, mediaApi, migrationApi, sitesApi, calendarAp
 import { mapBookingAiContentToSections, distributeImagesToSections } from '../lib/aiPageBuilder';
 import CreateProgressModal from '../components/CreateProgressModal';
 import DesignStyleSelector, { DESIGN_STYLES } from '../components/DesignStyleSelector';
+import { extractColorsFromImage } from '../lib/colorExtractor';
 import { Button, Card, Input } from '../ui';
 
 const COLOR_PALETTES = [
@@ -39,8 +40,14 @@ export default function BookingCreatePage() {
   const [city, setCity] = useState('');
   const [designStyle, setDesignStyle] = useState('modern');
 
-  // Color
+  // Color selection
+  const [colorMode, setColorMode] = useState('theme'); // 'theme' | 'logo' | 'custom'
   const [selectedPalette, setSelectedPalette] = useState(COLOR_PALETTES[0]);
+  const [customColors, setCustomColors] = useState({ primary: '#0ea5e9', secondary: '#0f172a', accent: '#f59e0b' });
+  const [suggestedColors, setSuggestedColors] = useState(null);
+
+  // Logo
+  const [logoFile, setLogoFile] = useState(null);
 
   // Optional
   const [phone, setPhone] = useState('');
@@ -107,6 +114,22 @@ export default function BookingCreatePage() {
             }
           }
 
+          // Extract colors from migration
+          if (ec.colors) {
+            const c = ec.colors;
+            setCustomColors({
+              primary: c.primary || c.mainColor || '#0ea5e9',
+              secondary: c.secondary || c.backgroundColor || '#0f172a',
+              accent: c.accent || c.accentColor || '#f59e0b',
+            });
+            setColorMode('custom');
+          }
+
+          // Extract design style if suggested
+          if (ec.designStyle && DESIGN_STYLES.some(s => s.id === ec.designStyle)) {
+            setDesignStyle(ec.designStyle);
+          }
+
           toast.success('Informations importées avec succès');
           break;
         }
@@ -143,6 +166,13 @@ export default function BookingCreatePage() {
   const selectedStyleObj = DESIGN_STYLES.find(s => s.id === designStyle) || DESIGN_STYLES[0];
   const effectiveSpecialty = specialty === 'Autre' ? customSpecialty : specialty;
 
+  // Resolve active colors based on color mode
+  const activeColors = colorMode === 'logo' && suggestedColors?.suggested
+    ? { primary: suggestedColors.suggested.primaryColor, secondary: suggestedColors.suggested.backgroundColor || '#0f172a', accent: suggestedColors.suggested.accentColor }
+    : colorMode === 'custom'
+    ? customColors
+    : selectedPalette;
+
   const onDropPhoto = useCallback((files) => {
     if (files[0]) setPhoto({ file: files[0], preview: URL.createObjectURL(files[0]) });
   }, []);
@@ -176,9 +206,9 @@ export default function BookingCreatePage() {
       },
       design: {
         designStyle,
-        primaryColor: selectedPalette.primary,
-        secondaryColor: selectedPalette.secondary,
-        accentColor: selectedPalette.accent,
+        primaryColor: activeColors.primary,
+        secondaryColor: activeColors.secondary,
+        accentColor: activeColors.accent,
         backgroundColor: '#ffffff',
         textColor: '#333333',
         fontHeading: selectedStyleObj.fonts.heading,
@@ -214,7 +244,7 @@ export default function BookingCreatePage() {
       const site = await createSite(siteData);
       setCreatedSiteId(site._id);
 
-      // 2. Upload photo
+      // 2. Upload photo + logo
       const uploadedMediaIds = [];
       if (photo) {
         advance('photo');
@@ -224,6 +254,16 @@ export default function BookingCreatePage() {
           const { media } = await mediaApi.upload(site._id, fd);
           uploadedMediaIds.push(media._id);
         } catch (err) { console.error('Photo upload error:', err); }
+      }
+      if (logoFile) {
+        try {
+          const fd = new FormData();
+          fd.append('file', logoFile.file);
+          fd.append('folder', 'logo');
+          const { media } = await mediaApi.upload(site._id, fd);
+          // Update site with logo
+          await sitesApi.update(site._id, { 'design.logoMediaId': media._id });
+        } catch (err) { console.warn('Logo upload error:', err); }
       }
 
       // 2b. Import Google Reviews
@@ -342,7 +382,7 @@ export default function BookingCreatePage() {
           error={createError}
           siteId={createdSiteId}
           template={designStyle}
-          colors={selectedPalette}
+          colors={activeColors}
           siteName={practitionerName}
           onClose={() => {
             setShowProgressModal(false);
@@ -467,26 +507,160 @@ export default function BookingCreatePage() {
             <label className="block text-sm font-medium text-slate-300 mb-3">
               <Palette size={14} className="inline mr-1.5" />Palette de couleurs
             </label>
-            <div className="grid grid-cols-4 gap-2">
-              {COLOR_PALETTES.map(p => (
+
+            {/* Color mode tabs */}
+            <div className="flex gap-1 mb-4 bg-white/[0.03] rounded-lg p-1">
+              {[
+                { id: 'theme', label: 'Thèmes', icon: Palette },
+                { id: 'logo', label: 'Depuis le logo', icon: Pipette },
+                { id: 'custom', label: 'Manuel', icon: PenTool },
+              ].map(tab => (
                 <button
-                  key={p.name}
-                  onClick={() => setSelectedPalette(p)}
-                  className={`flex items-center gap-2 p-2.5 rounded-lg border transition-all ${
-                    selectedPalette.name === p.name
-                      ? 'border-accent/50 bg-accent/5'
-                      : 'border-white/5 hover:border-white/15 bg-white/[0.02]'
+                  key={tab.id}
+                  onClick={() => setColorMode(tab.id)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                    colorMode === tab.id
+                      ? 'bg-purple-500/15 text-purple-400 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-300'
                   }`}
                 >
-                  <div className="flex gap-0.5">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.primary }} />
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.secondary }} />
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.accent }} />
-                  </div>
-                  <span className="text-xs text-slate-400">{p.name}</span>
-                  {selectedPalette.name === p.name && <Check size={12} className="text-accent ml-auto" />}
+                  <tab.icon size={13} />
+                  {tab.label}
                 </button>
               ))}
+            </div>
+
+            {/* Theme palettes */}
+            {colorMode === 'theme' && (
+              <div className="grid grid-cols-4 gap-2">
+                {COLOR_PALETTES.map(p => (
+                  <button
+                    key={p.name}
+                    onClick={() => setSelectedPalette(p)}
+                    className={`relative p-3 rounded-xl border-2 transition-all ${
+                      selectedPalette.name === p.name
+                        ? 'border-purple-500 ring-1 ring-purple-500/20'
+                        : 'border-white/[0.07] hover:border-white/[0.15]'
+                    }`}
+                  >
+                    <div className="flex gap-1.5 justify-center mb-2">
+                      <div className="w-5 h-5 rounded-full shadow-sm" style={{ backgroundColor: p.primary }} />
+                      <div className="w-5 h-5 rounded-full shadow-sm" style={{ backgroundColor: p.secondary }} />
+                      <div className="w-5 h-5 rounded-full shadow-sm" style={{ backgroundColor: p.accent }} />
+                    </div>
+                    <span className="text-[10px] text-slate-400 block text-center">{p.name}</span>
+                    {selectedPalette.name === p.name && (
+                      <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
+                        <Check size={10} className="text-white" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Logo colors */}
+            {colorMode === 'logo' && (
+              <div>
+                {suggestedColors ? (
+                  <div>
+                    <p className="text-xs text-emerald-400 mb-3">Couleurs extraites du logo :</p>
+                    <div className="flex gap-3 mb-3">
+                      {suggestedColors.palette?.slice(0, 6).map((color, i) => (
+                        <div key={i} className="flex flex-col items-center gap-1">
+                          <div className="w-8 h-8 rounded-lg border border-white/10 shadow-sm" style={{ backgroundColor: color }} />
+                          <span className="text-[8px] text-slate-500 font-mono">{color}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-4 mt-3 pt-3 border-t border-white/[0.05]">
+                      {[
+                        { label: 'Primary', color: suggestedColors.suggested?.primaryColor },
+                        { label: 'Secondary', color: suggestedColors.suggested?.backgroundColor || '#0f172a' },
+                        { label: 'Accent', color: suggestedColors.suggested?.accentColor },
+                      ].map(item => (
+                        <div key={item.label} className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full border border-white/15" style={{ backgroundColor: item.color }} />
+                          <div>
+                            <span className="text-[9px] text-slate-500 uppercase tracking-wider block">{item.label}</span>
+                            <span className="text-[10px] text-slate-300 font-mono">{item.color}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Pipette className="mx-auto w-8 h-8 text-slate-600 mb-2" />
+                    <p className="text-xs text-slate-500">Importez un logo ci-dessous pour extraire ses couleurs automatiquement</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Custom colors */}
+            {colorMode === 'custom' && (
+              <div className="space-y-3">
+                {[
+                  { key: 'primary', label: 'Couleur principale' },
+                  { key: 'secondary', label: 'Couleur secondaire' },
+                  { key: 'accent', label: 'Couleur d\'accent' },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <label
+                      className="relative w-10 h-10 rounded-lg border border-white/10 overflow-hidden cursor-pointer flex-shrink-0"
+                      style={{ backgroundColor: customColors[key] }}
+                    >
+                      <input
+                        type="color"
+                        value={customColors[key]}
+                        onChange={e => setCustomColors(prev => ({ ...prev, [key]: e.target.value }))}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                    </label>
+                    <div className="flex-1">
+                      <span className="text-xs text-slate-400 block mb-0.5">{label}</span>
+                      <input
+                        type="text"
+                        value={customColors[key]}
+                        onChange={e => {
+                          const v = e.target.value;
+                          if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setCustomColors(prev => ({ ...prev, [key]: v }));
+                        }}
+                        className="w-24 bg-[#151525] border border-white/[0.07] text-slate-300 rounded px-2 py-1 text-xs font-mono outline-none focus:border-purple-500/40"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Logo upload (inside color card) */}
+            <div className="mt-4 pt-4 border-t border-white/[0.07]">
+              <label className="text-xs font-medium text-slate-400 mb-1.5 block">Logo (optionnel)</label>
+              {logoFile ? (
+                <div className="relative w-full h-16 rounded-lg border border-white/[0.07] overflow-hidden flex items-center justify-center bg-white/[0.02]">
+                  <img src={logoFile.preview} alt="Logo" className="max-h-full max-w-full object-contain p-2" />
+                  <button onClick={() => { URL.revokeObjectURL(logoFile.preview); setLogoFile(null); setSuggestedColors(null); }} className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center">
+                    <X size={10} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center w-full h-16 rounded-lg border-2 border-dashed border-white/[0.1] hover:border-purple-500/40 cursor-pointer transition-colors">
+                  <Upload size={16} className="text-slate-500 mr-2" />
+                  <span className="text-xs text-slate-500">Importer un logo</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setLogoFile({ file: f, preview: URL.createObjectURL(f) });
+                      try {
+                        const result = await extractColorsFromImage(f);
+                        if (result) { setSuggestedColors(result); setColorMode('logo'); }
+                      } catch {}
+                    }
+                  }} />
+                </label>
+              )}
             </div>
           </div>
         </Card>
