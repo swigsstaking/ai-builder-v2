@@ -287,6 +287,10 @@ export async function renderPage(site, page, options = {}) {
     },
     googleReviewRating: site.business?.googleReviewRating || null,
     googleReviewCount: site.business?.googleReviewCount || null,
+    googleMapsUrl: site.business?.googleMapsUrl || null,
+    address: site.business?.address || '',
+    city: site.business?.city || '',
+    isOnePage: allPages.length <= 1,
   };
 
   // Render React component to string

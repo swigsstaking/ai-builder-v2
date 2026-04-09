@@ -324,7 +324,7 @@ export default function BookingCreatePage() {
           slug: slugBase,
           businessName: practitionerName.trim(),
           description: `${effectiveSpecialty.trim()}${city.trim() ? ` à ${city.trim()}` : ''}`,
-          branding: { primaryColor: selectedPalette.primary },
+          branding: { primaryColor: activeColors.primary },
           bookingSettings: { autoConfirm: true, slotInterval: 30 },
         });
         calendarSlug = profile.slug || slugBase;

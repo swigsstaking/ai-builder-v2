@@ -129,7 +129,15 @@ export const fetchGoogleReviews = async (req, res, next) => {
             const existing = section.data?.testimonials || [];
             // Keep AI reviews, replace Google reviews
             const aiReviews = existing.filter(t => !t.isGoogle);
-            const googleReviews = result.reviews.map(r => ({ ...r, isGoogle: true }));
+            // Map Google fields → template fields
+            const googleReviews = result.reviews.map(r => ({
+              author: r.name || r.author || '',
+              quote: r.text || r.quote || '',
+              text: r.text || '',
+              role: r.publishedAt || '',
+              rating: r.rating || 5,
+              isGoogle: true,
+            }));
             section.data.testimonials = [...aiReviews, ...googleReviews];
             section.data.reviewCount = result.totalReviews;
             section.data.rating = result.rating;

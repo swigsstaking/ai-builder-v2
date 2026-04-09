@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import { captureWebsiteScreenshots } from './screenshot.service.js';
 
 /**
  * Parse agenda.ch practitioner pages.
@@ -70,7 +71,30 @@ export async function parseAgendaCh(sourceUrl) {
 
     console.log(`[agenda-ch] Extracted ${allServices.length} services`);
 
-    // Step 4: Build extractedContent matching migration schema
+    // Step 4: If practitioner has an external website, scrape its colors + fonts
+    let externalColors = null;
+    let externalFonts = null;
+    const externalUrl = jsonLdData?.url;
+    if (externalUrl && !externalUrl.includes('agenda.ch')) {
+      try {
+        console.log(`[agenda-ch] Fetching colors from external website: ${externalUrl}`);
+        const screenshots = await captureWebsiteScreenshots(externalUrl, { maxPages: 1, fullPage: false });
+        const homepage = screenshots.find(s => s.page === '/');
+        if (homepage?.extractedColors) {
+          externalColors = {
+            primary: homepage.extractedColors.primary,
+            secondary: homepage.extractedColors.secondary,
+            accent: homepage.extractedColors.accent,
+          };
+          externalFonts = homepage.extractedColors.fonts;
+          console.log(`[agenda-ch] Extracted from external site: ${JSON.stringify(externalColors)}`);
+        }
+      } catch (err) {
+        console.warn(`[agenda-ch] External website scrape failed: ${err.message}`);
+      }
+    }
+
+    // Step 5: Build extractedContent matching migration schema
     const address = jsonLdData?.address || {};
     const contactPoint = jsonLdData?.contactPoint || {};
 
@@ -89,7 +113,8 @@ export async function parseAgendaCh(sourceUrl) {
         title: s.name,
         description: `${s.duration} — ${s.description}`.slice(0, 300),
       })),
-      colors: { primary: null, secondary: null, accent: null },
+      colors: externalColors || { primary: null, secondary: null, accent: null },
+      fonts: externalFonts || null,
       detectedSections: ['hero-practitioner', 'services-booking', 'about', 'booking-widget', 'contact'],
       seo: {
         title: jsonLdData?.name || '',
