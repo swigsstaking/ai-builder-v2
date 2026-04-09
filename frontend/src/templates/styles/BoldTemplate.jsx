@@ -11,6 +11,7 @@ import {
   Play,
   Trophy,
   Clock,
+  Calendar,
 } from 'lucide-react';
 import { getSectionData, isSectionVisible, getVisibleSections, getStarRating } from '../sectionHelpers';
 
@@ -337,10 +338,10 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
                         className="w-10 h-10 flex items-center justify-center font-black text-lg"
                         style={{ color: primary }}
                       >
-                        {review.author?.charAt(0)}
+                        {(review.author || review.name)?.charAt(0)}
                       </div>
                       <span className="text-white font-bold uppercase tracking-wider text-sm">
-                        {review.author}
+                        {review.author || review.name}
                       </span>
                     </div>
                   </div>
@@ -550,7 +551,7 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
             {contactData.embedUrl && (
               <div className="mt-8 border border-white/10 overflow-hidden">
                 <iframe
-                  src={contactData.embedUrl}
+                  src={`https://www.google.com/maps?q=${encodeURIComponent([siteName, site.city || contactData.address || ''].filter(Boolean).join(' '))}&output=embed`}
                   width="100%"
                   height="300"
                   style={{ border: 0 }}
@@ -643,12 +644,12 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
             )}
             {heroPractitionerData.ctaText && (
               <a
-                href={heroPractitionerData.ctaUrl || '#booking-widget'}
-                className="inline-flex items-center gap-3 px-10 py-5 font-bold uppercase tracking-wider text-white hover:scale-105 transition-transform"
+                href={heroPractitionerData.ctaUrl || '#booking'}
+                className="inline-block no-underline px-10 py-5 font-bold uppercase tracking-wider text-white hover:scale-105 transition-transform"
                 style={{ backgroundColor: primary }}
               >
                 {heroPractitionerData.ctaText}
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="inline w-5 h-5 ml-3" />
               </a>
             )}
           </div>
@@ -715,12 +716,13 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
                   {service.description && (
                     <p className="text-white/50 text-sm leading-relaxed mb-6">{service.description}</p>
                   )}
-                  <button
-                    className="px-6 py-3 font-bold uppercase tracking-wider text-sm text-white rounded-md hover:scale-105 transition-transform"
+                  <a
+                    href="#booking"
+                    className="inline-block no-underline px-6 py-3 font-bold uppercase tracking-wider text-sm text-white rounded-md hover:scale-105 transition-transform"
                     style={{ backgroundColor: primary }}
                   >
                     Réserver
-                  </button>
+                  </a>
                 </div>
               ))}
             </div>
@@ -734,39 +736,66 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
           key="booking-widget"
           id="booking"
           data-section="booking-widget"
-          className={`${isMobile ? 'py-20 px-6' : 'py-32 px-12'}`}
-          style={{ backgroundColor: secondary }}
+          className={`${isMobile ? 'py-20 px-6' : 'py-32 px-12'} relative overflow-hidden`}
+          style={{ background: `linear-gradient(180deg, ${primary}05 0%, ${primary}12 100%)` }}
         >
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-4 mb-12">
-              <div className="w-16 h-1" style={{ backgroundColor: primary }} />
+          {/* Decorative dots pattern */}
+          <div
+            className="absolute inset-0 opacity-30 pointer-events-none"
+            style={{
+              backgroundImage: `radial-gradient(circle at 2px 2px, ${primary}20 1px, transparent 0)`,
+              backgroundSize: '32px 32px',
+            }}
+          />
+          <div className="max-w-5xl mx-auto relative z-10">
+            <div className="text-center mb-12">
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 mb-6 border font-bold uppercase tracking-widest text-xs"
+                style={{ borderColor: `${primary}50`, color: primary }}
+              >
+                <Calendar className="w-4 h-4" />
+                Réservation en ligne
+              </div>
               <h2
                 data-editable="title"
-                className={`font-black text-white uppercase ${isMobile ? 'text-3xl' : 'text-5xl'}`}
+                className={`font-black uppercase mb-4 ${isMobile ? 'text-3xl' : 'text-4xl lg:text-5xl'}`}
+                style={{ color: secondary, letterSpacing: '-0.02em' }}
               >
                 {bookingWidgetData.title || 'RÉSERVER'}
               </h2>
+              <p className={`text-gray-600 max-w-2xl mx-auto ${isMobile ? 'text-base' : 'text-lg'}`}>
+                Choisissez votre prestation et le créneau qui vous convient. Confirmation instantanée.
+              </p>
             </div>
             {bookingWidgetData.calendarSlug ? (
-              <div className="border-2 border-white/10 overflow-hidden">
+              <div
+                className="bg-white rounded-lg overflow-hidden border-2"
+                style={{
+                  borderColor: `${primary}20`,
+                  boxShadow: `0 20px 60px -15px ${primary}40, 0 10px 30px -10px rgba(0,0,0,0.15)`,
+                }}
+              >
                 <iframe
                   src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}`}
-                  width="100%"
-                  height="600"
-                  style={{ border: 0 }}
+                  title="Réservation en ligne"
+                  className="w-full border-0 block"
+                  style={{ height: isMobile ? '600px' : '720px', backgroundColor: 'transparent' }}
+                  allow="payment"
                   loading="lazy"
-                  title="Réservation"
                 />
               </div>
             ) : (
               <div
-                className="border-2 border-white/10 p-16 text-center"
+                className="bg-white rounded-lg border-2 border-dashed flex items-center justify-center"
+                style={{ borderColor: `${primary}30`, height: '300px' }}
               >
-                <p className="text-white/30 uppercase tracking-widest text-sm font-bold">
-                  Calendrier de réservation
-                </p>
-                <p className="text-white/20 mt-2 text-sm">
-                  Configurez votre lien de calendrier pour activer la réservation en ligne.
+                <p className="text-center">
+                  <span className="block font-bold uppercase tracking-widest text-sm" style={{ color: secondary }}>
+                    Calendrier de réservation
+                  </span>
+                  <span className="block mt-2 text-sm text-gray-500">
+                    Configurez le slug Calendar dans l&apos;éditeur
+                  </span>
                 </p>
               </div>
             )}
@@ -789,93 +818,104 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
       className="w-full h-full overflow-y-auto relative"
       style={{ backgroundColor: secondary, fontFamily: "'Inter', system-ui, sans-serif" }}
     >
-      {/* Navbar */}
-      <nav
-        className="sticky top-0 z-50 px-6 py-4"
-        style={{ backgroundColor: `${secondary}f0`, backdropFilter: 'blur(10px)' }}
-      >
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-10 h-10 flex items-center justify-center font-black text-xl"
-              style={{ color: primary }}
-            >
-              {siteName?.charAt(0)}
-            </div>
-            <span className="text-white font-bold text-lg tracking-tight">{siteName}</span>
+      {/* Navbar — hidden on one-page booking sites (just a floating CTA) */}
+      {site.isOnePage && isBookingPage ? (
+        <a
+          href="#booking"
+          className="fixed top-4 right-4 z-50 px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-white shadow-lg hover:shadow-xl transition-shadow no-underline"
+          style={{ backgroundColor: primary }}
+        >
+          Prendre rendez-vous
+        </a>
+      ) : (
+        <nav
+          id="navbar"
+          className="sticky top-0 z-50 px-6 py-4"
+          style={{ backgroundColor: `${secondary}f0`, backdropFilter: 'blur(10px)' }}
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="#hero-practitioner" className="flex items-center gap-2 no-underline">
+              <div
+                className="w-10 h-10 flex items-center justify-center font-black text-xl"
+                style={{ color: primary }}
+              >
+                {siteName?.charAt(0)}
+              </div>
+              <span className="text-white font-bold text-lg tracking-tight">{siteName}</span>
+            </a>
+            {!isMobile && (
+              <div className="flex items-center gap-8">
+                <a
+                  href={isBookingPage ? '#hero-practitioner' : '#hero'}
+                  className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider no-underline"
+                >
+                  Accueil
+                </a>
+                {isBookingPage ? (
+                  <>
+                    {showServicesBooking && bookingServices.length > 0 && (
+                      <a
+                        href="#services-booking"
+                        className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider no-underline"
+                      >
+                        Prestations
+                      </a>
+                    )}
+                    {showAbout && aboutData.body && (
+                      <a
+                        href="#about"
+                        className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider no-underline"
+                      >
+                        À propos
+                      </a>
+                    )}
+                    {showBookingWidget && (
+                      <a
+                        href="#booking"
+                        className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider no-underline"
+                      >
+                        Réserver
+                      </a>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {showServices && services.length > 0 && (
+                      <a
+                        href="#services"
+                        className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider no-underline"
+                      >
+                        Services
+                      </a>
+                    )}
+                    {showAbout && aboutData.body && (
+                      <a
+                        href="#about"
+                        className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider no-underline"
+                      >
+                        À propos
+                      </a>
+                    )}
+                    <a
+                      href="#contact"
+                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider no-underline"
+                    >
+                      Contact
+                    </a>
+                  </>
+                )}
+                <a
+                  href={isBookingPage ? '#booking' : '#contact'}
+                  className="inline-block no-underline px-6 py-3 font-bold text-sm uppercase tracking-wider"
+                  style={{ backgroundColor: primary, color: 'white' }}
+                >
+                  {isBookingPage ? 'Prendre rendez-vous' : 'Nous contacter'}
+                </a>
+              </div>
+            )}
           </div>
-          {!isMobile && (
-            <div className="flex items-center gap-8">
-              <span
-                onClick={() => handleNavigate(isBookingPage ? 'hero-practitioner' : 'hero')}
-                className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-              >
-                Accueil
-              </span>
-              {isBookingPage ? (
-                <>
-                  {showServicesBooking && bookingServices.length > 0 && (
-                    <span
-                      onClick={() => handleNavigate('services-booking')}
-                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-                    >
-                      Prestations
-                    </span>
-                  )}
-                  {showAbout && aboutData.body && (
-                    <span
-                      onClick={() => handleNavigate('about')}
-                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-                    >
-                      À propos
-                    </span>
-                  )}
-                  {showBookingWidget && (
-                    <span
-                      onClick={() => handleNavigate('booking')}
-                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-                    >
-                      Réserver
-                    </span>
-                  )}
-                </>
-              ) : (
-                <>
-                  {showServices && services.length > 0 && (
-                    <span
-                      onClick={() => handleNavigate('services')}
-                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-                    >
-                      Services
-                    </span>
-                  )}
-                  {showAbout && aboutData.body && (
-                    <span
-                      onClick={() => handleNavigate('about')}
-                      className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-                    >
-                      À propos
-                    </span>
-                  )}
-                  <span
-                    onClick={() => handleNavigate('contact')}
-                    className="text-white/60 text-sm font-medium hover:text-white cursor-pointer transition-colors uppercase tracking-wider"
-                  >
-                    Contact
-                  </span>
-                </>
-              )}
-              <button
-                className="px-6 py-3 font-bold text-sm uppercase tracking-wider"
-                style={{ backgroundColor: primary, color: 'white' }}
-                onClick={() => handleNavigate(isBookingPage ? 'booking' : 'contact')}
-              >
-                {isBookingPage ? 'Prendre rendez-vous' : 'Nous contacter'}
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {/* Render sections in order */}
       {orderedTypes.map(type => {
