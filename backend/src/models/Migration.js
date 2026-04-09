@@ -32,6 +32,7 @@ const migrationSchema = new mongoose.Schema({
       secondary: String,
       accent: String,
     },
+    googleMapsUrl: String,
     detectedSections: [String],
     seo: {
       title: String,

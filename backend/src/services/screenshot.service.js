@@ -102,7 +102,7 @@ export const captureWebsiteScreenshots = async (url, options = {}) => {
       // Extract brand colors from CSS/HTML (instant, no AI needed)
       const extractedColors = await page.evaluate(() => {
         const colorCounts = {};
-        const useless = new Set(['#000', '#000000', '#fff', '#ffffff', '#111', '#111111', '#222', '#222222', '#333', '#333333', '#eee', '#eeeeee', '#f5f5f5', '#fefefe', 'rgb(0, 0, 0)', 'rgb(255, 255, 255)', 'rgb(0,0,0)', 'rgb(255,255,255)', 'transparent', 'inherit', 'initial']);
+        const useless = new Set(['#000', '#000000', '#fff', '#ffffff', '#111', '#111111', '#181818', '#1a1a1a', '#222', '#222222', '#333', '#333333', '#eee', '#eeeeee', '#f5f5f5', '#f4f4f4', '#fefefe', '#fafafa', '#0000ee', '#0000ff', '#0056b3', '#116dff', 'rgb(0, 0, 0)', 'rgb(255, 255, 255)', 'rgb(0,0,0)', 'rgb(255,255,255)', 'rgb(24, 24, 24)', 'rgb(0, 0, 238)', 'rgb(0, 0, 255)', 'rgb(17, 109, 255)', 'transparent', 'inherit', 'initial']);
 
         const normalizeHex = (c) => {
           if (!c) return null;
@@ -132,9 +132,21 @@ export const captureWebsiteScreenshots = async (url, options = {}) => {
           if (val) cssVarColors.push(normalizeHex(val));
         }
 
-        // 3. Computed colors from key elements (buttons, links, nav, headings)
-        const selectors = ['a', 'button', 'nav', 'h1', 'h2', '.btn', '[class*="primary"]', '[class*="accent"]', '[class*="brand"]', 'header'];
-        for (const sel of selectors) {
+        // 3. Computed colors from key elements — buttons/CTA get extra weight
+        const ctaSelectors = ['button', '.btn', '[class*="btn"]', '[class*="button"]', '[class*="cta"]', '[class*="reservation"]', '[class*="booking"]', 'a[class*="btn"]'];
+        const normalSelectors = ['a', 'nav', 'h1', 'h2', '[class*="primary"]', '[class*="accent"]', '[class*="brand"]', 'header'];
+
+        // CTA elements get 5x weight (brand colors are most visible on buttons)
+        for (const sel of ctaSelectors) {
+          document.querySelectorAll(sel).forEach(el => {
+            const s = getComputedStyle(el);
+            [s.backgroundColor, s.borderColor].forEach(c => {
+              const hex = normalizeHex(c);
+              if (hex) colorCounts[hex] = (colorCounts[hex] || 0) + 5;
+            });
+          });
+        }
+        for (const sel of normalSelectors) {
           document.querySelectorAll(sel).forEach(el => {
             const s = getComputedStyle(el);
             [s.color, s.backgroundColor, s.borderColor].forEach(c => {
@@ -170,7 +182,13 @@ export const captureWebsiteScreenshots = async (url, options = {}) => {
         const accent = validCssVars[1] || brandColors.find(c => c !== primary) || brandColors[1] || null;
         const secondary = bgColor || sorted.find(c => c !== primary && c !== accent) || null;
 
-        return { primary, secondary, accent, all: sorted.slice(0, 8) };
+        // 5. Extract Google Maps URL from page links
+        let googleMapsUrl = null;
+        document.querySelectorAll('a[href*="google.com/maps"], a[href*="goo.gl/maps"], a[href*="g.page"]').forEach(a => {
+          if (!googleMapsUrl) googleMapsUrl = a.href;
+        });
+
+        return { primary, secondary, accent, all: sorted.slice(0, 8), googleMapsUrl };
       });
 
       const data = { page: '/', url: baseUrl, screenshot, size: screenshot.length, extractedColors };

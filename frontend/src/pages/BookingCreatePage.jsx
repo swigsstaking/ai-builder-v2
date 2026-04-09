@@ -129,6 +129,12 @@ export default function BookingCreatePage() {
             setDesignStyle(ec.designStyle);
           }
 
+          // Extract Google Maps URL
+          if (ec.googleMapsUrl && !googleMapsUrl) {
+            setGoogleMapsUrl(ec.googleMapsUrl);
+            setShowOptional(true);
+          }
+
           toast.success('Informations importées avec succès');
           break;
         }

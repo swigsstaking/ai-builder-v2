@@ -177,20 +177,26 @@ export async function runAnalysisPipeline(migrationId) {
       migration.extractedContent = normalizeAnalysis(analysisResult);
     }
 
-    // Inject CSS-extracted colors from homepage screenshot (more reliable than AI)
+    // Inject CSS-extracted data from homepage screenshot (more reliable than AI)
     const homepageData = screenshots.find(s => s.page === '/' || s.page === 'homepage');
-    const cssColors = homepageData?.extractedColors;
-    if (cssColors && (cssColors.primary || cssColors.accent)) {
+    const cssData = homepageData?.extractedColors;
+    if (cssData) {
       const ec = migration.extractedContent;
-      if (!ec.colors?.primary) {
+      // Colors — CSS extraction is more reliable than AI, always prefer it
+      if (cssData.primary || cssData.accent) {
         ec.colors = {
-          primary: cssColors.primary || cssColors.accent || null,
-          secondary: cssColors.secondary || ec.colors?.secondary || null,
-          accent: cssColors.accent || cssColors.primary || null,
+          primary: cssData.primary || cssData.accent || null,
+          secondary: cssData.secondary || ec.colors?.secondary || null,
+          accent: cssData.accent || cssData.primary || null,
         };
-        migration.markModified('extractedContent');
         console.log(`[migration] Injected CSS colors: primary=${ec.colors.primary}, accent=${ec.colors.accent}`);
       }
+      // Google Maps URL
+      if (cssData.googleMapsUrl && !ec.googleMapsUrl) {
+        ec.googleMapsUrl = cssData.googleMapsUrl;
+        console.log(`[migration] Injected Google Maps URL: ${ec.googleMapsUrl}`);
+      }
+      migration.markModified('extractedContent');
     }
 
     // Done
