@@ -25,6 +25,7 @@ const migrationSchema = new mongoose.Schema({
       phone: String,
       email: String,
       address: String,
+      city: String,
     },
     services: [{ title: String, description: String }],
     colors: {

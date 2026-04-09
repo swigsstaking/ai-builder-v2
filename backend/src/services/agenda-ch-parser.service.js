@@ -83,6 +83,7 @@ export async function parseAgendaCh(sourceUrl) {
         phone: contactPoint.telephone || '',
         email: contactPoint.email || '',
         address: [address.streetAddress, address.postalCode, address.addressLocality].filter(Boolean).join(', '),
+        city: address.addressLocality || '',
       },
       services: allServices.map(s => ({
         title: s.name,
