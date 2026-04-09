@@ -765,7 +765,7 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
                 style={{ boxShadow: `0 20px 60px -15px ${primary}25, 0 10px 30px -10px rgba(0,0,0,0.1)` }}
               >
                 <iframe
-                  src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}`}
+                  src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}?embed=1&primary=${encodeURIComponent(primary)}`}
                   title="Réservation en ligne"
                   className="w-full border-0 block"
                   style={{ height: isMobile ? '600px' : '720px', backgroundColor: 'transparent' }}

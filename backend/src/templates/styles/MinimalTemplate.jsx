@@ -610,7 +610,7 @@ const MinimalTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
             {bookingWidgetData.calendarSlug ? (
               <div className="bg-white overflow-hidden border border-gray-200">
                 <iframe
-                  src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}`}
+                  src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}?embed=1&primary=${encodeURIComponent(primary)}`}
                   title="Réservation en ligne"
                   className="w-full border-0 block"
                   style={{ height: isMobile ? '600px' : '720px', backgroundColor: 'transparent' }}

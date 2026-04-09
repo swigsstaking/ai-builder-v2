@@ -863,7 +863,7 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
               >
                 <div className="bg-white rounded-[1.85rem] overflow-hidden">
                   <iframe
-                    src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}`}
+                    src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}?embed=1&primary=${encodeURIComponent(primary)}`}
                     title="Réservation en ligne"
                     className="w-full border-0 block"
                     style={{ height: isMobile ? '600px' : '720px', backgroundColor: 'transparent' }}
