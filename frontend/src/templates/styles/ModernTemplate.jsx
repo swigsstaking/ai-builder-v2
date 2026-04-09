@@ -12,6 +12,7 @@ import {
   Phone,
   MapPin,
   MessageSquareQuote,
+  Calendar,
 } from 'lucide-react';
 import { getSectionData, isSectionVisible, getVisibleSections, getStarRating } from '../sectionHelpers';
 
@@ -543,49 +544,41 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
             {contactData.body && (
               <div data-editable="body" className="text-gray-500 mb-8 max-w-xl mx-auto" dangerouslySetInnerHTML={{ __html: contactData.body }} />
             )}
+            <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+              {contactData.email && (
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <Mail className="w-8 h-8 mx-auto mb-3" style={{ color: primary }} />
+                  <p className="text-gray-600">{contactData.email}</p>
+                </div>
+              )}
+              {contactData.phone && (
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <Phone className="w-8 h-8 mx-auto mb-3" style={{ color: primary }} />
+                  <p className="text-gray-600">{contactData.phone}</p>
+                </div>
+              )}
+              {contactData.address && (
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <MapPin className="w-8 h-8 mx-auto mb-3" style={{ color: primary }} />
+                  <p className="text-gray-600">{contactData.address}</p>
+                </div>
+              )}
+            </div>
+            {contactData.hours && (
+              <p className="text-gray-400 text-sm mt-6">{contactData.hours}</p>
+            )}
             {(contactData.address || siteName) && (
-              <div className={`mt-8 grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                {/* Info column */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-left flex flex-col justify-center">
-                  <h3 className="font-bold text-xl mb-3" style={{ color: secondary }}>{siteName}</h3>
-                  {contactData.address && (
-                    <p className="text-gray-600 mb-2 flex items-start gap-2">
-                      <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: primary }} />
-                      <span>{contactData.address}</span>
-                    </p>
-                  )}
-                  {contactData.hours && (
-                    <p className="text-gray-600 mb-2 flex items-start gap-2">
-                      <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: primary }} />
-                      <span>{contactData.hours}</span>
-                    </p>
-                  )}
-                  {contactData.phone && (
-                    <p className="text-gray-600 mb-2 flex items-start gap-2">
-                      <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: primary }} />
-                      <a href={`tel:${contactData.phone}`} className="no-underline hover:underline" style={{ color: secondary }}>{contactData.phone}</a>
-                    </p>
-                  )}
-                  {contactData.email && (
-                    <p className="text-gray-600 flex items-start gap-2">
-                      <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: primary }} />
-                      <a href={`mailto:${contactData.email}`} className="no-underline hover:underline" style={{ color: secondary }}>{contactData.email}</a>
-                    </p>
-                  )}
-                </div>
-                {/* Map iframe — show business listing directly */}
-                <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100" style={{ minHeight: '320px' }}>
-                  <iframe
-                    src={`https://www.google.com/maps?q=${encodeURIComponent([siteName, site.city || contactData.address || ''].filter(Boolean).join(' '))}&output=embed`}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0, minHeight: '320px' }}
-                    allowFullScreen=""
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Localisation"
-                  />
-                </div>
+              <div className="mt-8 rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                <iframe
+                  src={`https://www.google.com/maps?q=${encodeURIComponent([siteName, site.city || contactData.address || ''].filter(Boolean).join(' '))}&output=embed`}
+                  width="100%"
+                  height="380"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Localisation"
+                />
               </div>
             )}
           </div>
@@ -733,32 +726,56 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
           key="booking-widget"
           id="booking"
           data-section="booking-widget"
-          className={`${isMobile ? 'py-16 px-6' : 'py-20 px-6'}`}
-          style={{ backgroundColor: `${primary}08` }}
+          className={`${isMobile ? 'py-16 px-6' : 'py-24 px-6'} relative overflow-hidden`}
+          style={{ background: `linear-gradient(180deg, ${primary}05 0%, ${primary}12 100%)` }}
         >
-          <div className="max-w-4xl mx-auto">
-            {bookingWidgetData.title && (
-              <h2
-                data-editable="title"
-                className={`font-bold text-center mb-8 ${isMobile ? 'text-2xl' : 'text-3xl'}`}
-                style={{ color: secondary }}
+          {/* Decorative dots pattern */}
+          <div
+            className="absolute inset-0 opacity-30 pointer-events-none"
+            style={{
+              backgroundImage: `radial-gradient(circle at 2px 2px, ${primary}20 1px, transparent 0)`,
+              backgroundSize: '32px 32px',
+            }}
+          />
+          <div className="max-w-5xl mx-auto relative z-10">
+            <div className="text-center mb-10">
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{ backgroundColor: `${primary}15`, color: primary }}
               >
-                {bookingWidgetData.title}
-              </h2>
-            )}
+                <Calendar className="w-4 h-4" />
+                Réservation en ligne
+              </div>
+              {bookingWidgetData.title && (
+                <h2
+                  data-editable="title"
+                  className={`font-bold mb-3 ${isMobile ? 'text-2xl' : 'text-4xl'}`}
+                  style={{ color: secondary }}
+                >
+                  {bookingWidgetData.title}
+                </h2>
+              )}
+              <p className={`text-gray-500 max-w-xl mx-auto ${isMobile ? 'text-sm' : 'text-base'}`}>
+                Choisissez votre prestation et le créneau qui vous convient. Confirmation instantanée.
+              </p>
+            </div>
             {bookingWidgetData.calendarSlug ? (
-              <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+              <div
+                className="bg-white rounded-3xl overflow-hidden border border-gray-100"
+                style={{ boxShadow: `0 20px 60px -15px ${primary}25, 0 10px 30px -10px rgba(0,0,0,0.1)` }}
+              >
                 <iframe
                   src={`https://calendar.swigs.online/book/${bookingWidgetData.calendarSlug}`}
                   title="Réservation en ligne"
-                  className="w-full border-0"
-                  style={{ height: isMobile ? '500px' : '650px' }}
+                  className="w-full border-0 block"
+                  style={{ height: isMobile ? '600px' : '720px', backgroundColor: 'transparent' }}
                   allow="payment"
+                  loading="lazy"
                 />
               </div>
             ) : (
               <div
-                className="rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center"
+                className="bg-white rounded-3xl border-2 border-dashed border-gray-300 flex items-center justify-center"
                 style={{ height: '300px' }}
               >
                 <p className="text-gray-400 text-center">
