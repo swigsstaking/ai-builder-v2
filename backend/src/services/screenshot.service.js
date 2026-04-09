@@ -136,20 +136,18 @@ export const captureWebsiteScreenshots = async (url, options = {}) => {
         const ctaSelectors = ['button', '.btn', '[class*="btn"]', '[class*="button"]', '[class*="cta"]', '[class*="reservation"]', '[class*="booking"]', 'a[class*="btn"]'];
         const normalSelectors = ['a', 'nav', 'h1', 'h2', '[class*="primary"]', '[class*="accent"]', '[class*="brand"]', 'header'];
 
-        // CTA elements get 5x weight (brand colors are most visible on buttons)
+        // CTA elements get 5x weight — only backgroundColor (borderColor is unreliable on Wix/widgets)
         for (const sel of ctaSelectors) {
           document.querySelectorAll(sel).forEach(el => {
             const s = getComputedStyle(el);
-            [s.backgroundColor, s.borderColor].forEach(c => {
-              const hex = normalizeHex(c);
-              if (hex) colorCounts[hex] = (colorCounts[hex] || 0) + 5;
-            });
+            const bg = normalizeHex(s.backgroundColor);
+            if (bg) colorCounts[bg] = (colorCounts[bg] || 0) + 5;
           });
         }
         for (const sel of normalSelectors) {
           document.querySelectorAll(sel).forEach(el => {
             const s = getComputedStyle(el);
-            [s.color, s.backgroundColor, s.borderColor].forEach(c => {
+            [s.color, s.backgroundColor].forEach(c => {
               const hex = normalizeHex(c);
               if (hex) colorCounts[hex] = (colorCounts[hex] || 0) + 1;
             });
