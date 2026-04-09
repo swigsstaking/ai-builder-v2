@@ -13,7 +13,7 @@ const migrationSchema = new mongoose.Schema({
 
   // Raw analysis from whichever AI provider succeeded
   analysisResult: { type: mongoose.Schema.Types.Mixed },
-  analysisProvider: { type: String, enum: ['qwen3-vl', 'claude-vision', 'text-scraping'] },
+  analysisProvider: { type: String, enum: ['qwen3-vl', 'claude-vision', 'text-scraping', 'agenda-ch'] },
 
   // Normalized extracted content
   extractedContent: {
@@ -33,6 +33,14 @@ const migrationSchema = new mongoose.Schema({
       accent: String,
     },
     googleMapsUrl: String,
+    externalWebsite: String,
+    agendaCompanyId: String,
+    fonts: {
+      body: String,
+      heading: String,
+      googleFonts: [String],
+    },
+    designStyle: String,
     detectedSections: [String],
     seo: {
       title: String,

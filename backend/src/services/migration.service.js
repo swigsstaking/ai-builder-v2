@@ -4,6 +4,7 @@ import Migration from '../models/Migration.js';
 import { captureWebsiteScreenshots } from './screenshot.service.js';
 import { analyzeScreenshots } from './vision.service.js';
 import { scrapeWebsite } from './scraper.service.js';
+import { parseAgendaCh, isAgendaChUrl } from './agenda-ch-parser.service.js';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
 
@@ -103,6 +104,30 @@ export async function runAnalysisPipeline(migrationId) {
   const { sourceUrl } = migration;
 
   try {
+    // Shortcut: agenda.ch sites use a dedicated parser (much more reliable than OCR)
+    if (isAgendaChUrl(sourceUrl)) {
+      console.log(`[migration] Detected agenda.ch URL, using dedicated parser`);
+      migration.status = 'analyzing';
+      migration.currentStep = 'Extraction des données agenda.ch...';
+      migration.progress = 30;
+      await migration.save();
+
+      try {
+        const extracted = await parseAgendaCh(sourceUrl);
+        migration.extractedContent = extracted;
+        migration.analysisProvider = 'agenda-ch';
+        migration.status = 'analyzed';
+        migration.currentStep = 'Analyse terminée';
+        migration.progress = 100;
+        migration.markModified('extractedContent');
+        await migration.save();
+        console.log(`[migration] agenda.ch parsing complete: ${extracted.services.length} services found`);
+        return migration;
+      } catch (err) {
+        console.warn(`[migration] agenda.ch parser failed, falling back to standard pipeline: ${err.message}`);
+      }
+    }
+
     // Step 1: Capture screenshots with streaming OCR callback
     migration.status = 'capturing';
     migration.currentStep = 'Capture des pages du site...';
@@ -195,6 +220,24 @@ export async function runAnalysisPipeline(migrationId) {
       if (cssData.googleMapsUrl && !ec.googleMapsUrl) {
         ec.googleMapsUrl = cssData.googleMapsUrl;
         console.log(`[migration] Injected Google Maps URL: ${ec.googleMapsUrl}`);
+      }
+      // Fonts + suggested designStyle based on font family
+      if (cssData.fonts?.body || cssData.fonts?.heading) {
+        ec.fonts = cssData.fonts;
+        // Suggest a designStyle based on the heading font
+        const headingFont = (cssData.fonts.heading || cssData.fonts.body || '').toLowerCase();
+        const bodyFont = (cssData.fonts.body || '').toLowerCase();
+        // Match to our 5 DESIGN_STYLES (modern/bold/elegant/minimal/artistic)
+        // modern: Inter, bold: Montserrat+Open Sans, elegant: Playfair+Lora, minimal: Inter+Roboto, artistic: Raleway+Nunito
+        let suggestedStyle = null;
+        if (/playfair|cormorant|serif|merriweather|lora/i.test(headingFont)) suggestedStyle = 'elegant';
+        else if (/montserrat|poppins/i.test(headingFont)) suggestedStyle = 'bold';
+        else if (/raleway|nunito/i.test(headingFont)) suggestedStyle = 'artistic';
+        else if (/inter|roboto|helvetica|arial/i.test(headingFont)) suggestedStyle = /roboto/i.test(bodyFont) ? 'minimal' : 'modern';
+        if (suggestedStyle) {
+          ec.designStyle = suggestedStyle;
+          console.log(`[migration] Suggested designStyle=${suggestedStyle} from fonts: ${headingFont} / ${bodyFont}`);
+        }
       }
       migration.markModified('extractedContent');
     }

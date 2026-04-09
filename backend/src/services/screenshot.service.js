@@ -186,7 +186,48 @@ export const captureWebsiteScreenshots = async (url, options = {}) => {
           if (!googleMapsUrl) googleMapsUrl = a.href;
         });
 
-        return { primary, secondary, accent, all: sorted.slice(0, 8), googleMapsUrl };
+        // 6. Extract fonts (typography)
+        const extractFontName = (fontFamily) => {
+          if (!fontFamily) return null;
+          // Get first font in stack, strip quotes
+          const first = fontFamily.split(',')[0].trim().replace(/['"]/g, '');
+          // Skip generic fallbacks
+          if (['sans-serif', 'serif', 'monospace', 'system-ui', 'inherit', '-apple-system', 'BlinkMacSystemFont', 'Arial', 'Helvetica', 'Times', 'Times New Roman'].includes(first)) return null;
+          return first;
+        };
+
+        const bodyFont = extractFontName(getComputedStyle(document.body).fontFamily);
+        const h1El = document.querySelector('h1') || document.querySelector('h2');
+        const headingFont = h1El ? extractFontName(getComputedStyle(h1El).fontFamily) : null;
+
+        // Google Fonts URLs from <link> tags
+        const googleFonts = [];
+        document.querySelectorAll('link[href*="fonts.googleapis"], link[href*="fonts.google.com"]').forEach(l => {
+          try {
+            const url = new URL(l.href);
+            const family = url.searchParams.get('family');
+            if (family) {
+              // Handle both css1 (?family=Name) and css2 (?family=Name:wght@...)
+              family.split('|').forEach(f => {
+                const name = f.split(':')[0].replace(/\+/g, ' ').trim();
+                if (name && !googleFonts.includes(name)) googleFonts.push(name);
+              });
+              // css2 can have multiple &family= params too
+              url.searchParams.getAll('family').forEach(f => {
+                const name = f.split(':')[0].replace(/\+/g, ' ').trim();
+                if (name && !googleFonts.includes(name)) googleFonts.push(name);
+              });
+            }
+          } catch {}
+        });
+
+        const fonts = {
+          body: bodyFont,
+          heading: headingFont || bodyFont,
+          googleFonts,
+        };
+
+        return { primary, secondary, accent, all: sorted.slice(0, 8), googleMapsUrl, fonts };
       });
 
       const data = { page: '/', url: baseUrl, screenshot, size: screenshot.length, extractedColors };
