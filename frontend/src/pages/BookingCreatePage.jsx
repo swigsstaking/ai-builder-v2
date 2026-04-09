@@ -319,15 +319,23 @@ export default function BookingCreatePage() {
           .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
           .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-        // Create BookingProfile
-        const profile = await calendarApi.createBookingProfile({
-          slug: slugBase,
-          businessName: practitionerName.trim(),
-          description: `${effectiveSpecialty.trim()}${city.trim() ? ` à ${city.trim()}` : ''}`,
-          branding: { primaryColor: activeColors.primary },
-          bookingSettings: { autoConfirm: true, slotInterval: 30 },
-        });
-        calendarSlug = profile.slug || slugBase;
+        // Try to create BookingProfile, fall back to existing one
+        let profile;
+        try {
+          profile = await calendarApi.createBookingProfile({
+            slug: slugBase,
+            businessName: practitionerName.trim(),
+            description: `${effectiveSpecialty.trim()}${city.trim() ? ` à ${city.trim()}` : ''}`,
+            branding: { primaryColor: activeColors.primary },
+            bookingSettings: { autoConfirm: true, slotInterval: 30 },
+          });
+        } catch (createErr) {
+          // Profile already exists for this user → fetch it
+          console.warn('[Calendar] Create failed, fetching existing profile:', createErr.error || createErr.message);
+          profile = await calendarApi.getBookingProfile();
+        }
+        calendarSlug = profile?.slug || slugBase;
+        console.log('[Calendar] Using slug:', calendarSlug);
 
         // Push AI-generated services to Calendar
         const { page: updatedPage } = await pagesApi.getOne(page._id);

@@ -192,7 +192,16 @@ export function mapBookingAiContentToSections(sections, content) {
       }
       case 'google-reviews':
         if (content.googleReviews) {
-          sData.data = { ...s.data, ...content.googleReviews };
+          // Normalize testimonial fields (name → author, text → quote)
+          const items = content.googleReviews.testimonials || [];
+          const normalized = items.map(t => ({
+            author: t.author || t.name || '',
+            quote: t.quote || t.text || '',
+            text: t.text || '',
+            role: t.role || t.location || '',
+            rating: t.rating || 5,
+          }));
+          sData.data = { ...s.data, ...content.googleReviews, testimonials: normalized };
         }
         break;
       case 'faq':

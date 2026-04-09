@@ -363,10 +363,10 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
                         style={{ backgroundColor: primary }}
                       >
-                        {review.author?.charAt(0)}
+                        {(review.author || review.name)?.charAt(0)}
                       </div>
                       <span className="text-sm font-medium" style={{ color: secondary }}>
-                        {review.author}
+                        {review.author || review.name}
                       </span>
                     </div>
                   </div>
@@ -543,89 +543,48 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
             {contactData.body && (
               <div data-editable="body" className="text-gray-500 mb-8 max-w-xl mx-auto" dangerouslySetInnerHTML={{ __html: contactData.body }} />
             )}
-            <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
-              {contactData.email && (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                  <Mail className="w-8 h-8 mx-auto mb-3" style={{ color: primary }} />
-                  <p className="text-gray-600">{contactData.email}</p>
+            {(contactData.address || siteName) && (
+              <div className={`mt-8 grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                {/* Info column */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-left flex flex-col justify-center">
+                  <h3 className="font-bold text-xl mb-3" style={{ color: secondary }}>{siteName}</h3>
+                  {contactData.address && (
+                    <p className="text-gray-600 mb-2 flex items-start gap-2">
+                      <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: primary }} />
+                      <span>{contactData.address}</span>
+                    </p>
+                  )}
+                  {contactData.hours && (
+                    <p className="text-gray-600 mb-2 flex items-start gap-2">
+                      <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: primary }} />
+                      <span>{contactData.hours}</span>
+                    </p>
+                  )}
+                  {contactData.phone && (
+                    <p className="text-gray-600 mb-2 flex items-start gap-2">
+                      <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: primary }} />
+                      <a href={`tel:${contactData.phone}`} className="no-underline hover:underline" style={{ color: secondary }}>{contactData.phone}</a>
+                    </p>
+                  )}
+                  {contactData.email && (
+                    <p className="text-gray-600 flex items-start gap-2">
+                      <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: primary }} />
+                      <a href={`mailto:${contactData.email}`} className="no-underline hover:underline" style={{ color: secondary }}>{contactData.email}</a>
+                    </p>
+                  )}
                 </div>
-              )}
-              {contactData.phone && (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                  <Phone className="w-8 h-8 mx-auto mb-3" style={{ color: primary }} />
-                  <p className="text-gray-600">{contactData.phone}</p>
-                </div>
-              )}
-              {contactData.address && (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                  <MapPin className="w-8 h-8 mx-auto mb-3" style={{ color: primary }} />
-                  <p className="text-gray-600">{contactData.address}</p>
-                </div>
-              )}
-            </div>
-            {contactData.hours && (
-              <p className="text-gray-400 text-sm mt-6">{contactData.hours}</p>
-            )}
-            {contactData.embedUrl && (
-              <div className="mt-8 relative rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-                <iframe
-                  src={contactData.embedUrl}
-                  width="100%"
-                  height="380"
-                  style={{ border: 0 }}
-                  allowFullScreen=""
-                  loading="lazy"
-                  title="Carte"
-                />
-                {/* Overlay card style resamatic */}
-                <div className="absolute top-4 left-4 bg-white rounded-xl shadow-lg border border-gray-200 p-4 max-w-xs text-left z-10">
-                  <div className="flex items-start gap-3">
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0"
-                      style={{ backgroundColor: primary }}
-                    >
-                      {(siteName || 'C').charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm truncate" style={{ color: secondary }}>
-                        {siteName}
-                      </h3>
-                      {site.googleReviewRating && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="text-sm font-medium" style={{ color: secondary }}>{site.googleReviewRating}</span>
-                          <div className="flex gap-0.5">
-                            {[1, 2, 3, 4, 5].map(i => (
-                              <Star
-                                key={i}
-                                className="w-3 h-3"
-                                style={{
-                                  color: i <= Math.round(site.googleReviewRating) ? '#fbbf24' : '#e5e7eb',
-                                  fill: i <= Math.round(site.googleReviewRating) ? '#fbbf24' : 'none',
-                                }}
-                              />
-                            ))}
-                          </div>
-                          {site.googleReviewCount && (
-                            <span className="text-xs text-gray-500 ml-1">({site.googleReviewCount})</span>
-                          )}
-                        </div>
-                      )}
-                      {contactData.address && (
-                        <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{contactData.address}</p>
-                      )}
-                      {site.googleMapsUrl && (
-                        <a
-                          href={site.googleMapsUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block mt-2 text-xs font-medium no-underline"
-                          style={{ color: primary }}
-                        >
-                          Voir sur Google Maps →
-                        </a>
-                      )}
-                    </div>
-                  </div>
+                {/* Map iframe — show business listing directly */}
+                <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100" style={{ minHeight: '320px' }}>
+                  <iframe
+                    src={`https://www.google.com/maps?q=${encodeURIComponent([siteName, site.city || contactData.address || ''].filter(Boolean).join(' '))}&output=embed`}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0, minHeight: '320px' }}
+                    allowFullScreen=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Localisation"
+                  />
                 </div>
               </div>
             )}
