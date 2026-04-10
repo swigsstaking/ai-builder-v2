@@ -963,6 +963,21 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
               )}
             </div>
           </div>
+          {/* Map iframe — show business listing directly */}
+          {(contactData.address || siteName) && (
+            <div className="mt-8 rounded-2xl overflow-hidden border border-white/10">
+              <iframe
+                src={`https://www.google.com/maps?q=${encodeURIComponent([siteName, site.city || contactData.address || ''].filter(Boolean).join(' '))}&output=embed`}
+                width="100%"
+                height="300"
+                style={{ border: 0 }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Localisation"
+              />
+            </div>
+          )}
           <div className="mt-12 pt-8 border-t border-white/10 text-center text-white/40 text-sm">
             © {new Date().getFullYear()} {siteName}. Tous droits réservés.
           </div>

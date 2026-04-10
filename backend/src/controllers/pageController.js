@@ -40,7 +40,7 @@ const DEFAULT_BOOKING_SECTIONS = [
   { type: 'hero-practitioner', order: 0, data: { name: '', specialty: '', tagline: '', photoMediaId: null, ctaText: 'Prendre rendez-vous', ctaUrl: '#booking', style: { backgroundColor: '', textColor: '' } } },
   { type: 'services-booking', order: 1, data: { title: 'Nos prestations', subtitle: '', services: [], style: { backgroundColor: '', textColor: '' } } },
   { type: 'about', order: 2, data: { title: 'À propos', body: '', bulletPoints: [], imageMediaId: null, ctaText: '', ctaUrl: '#booking', style: { backgroundColor: '', textColor: '' } } },
-  { type: 'google-reviews', order: 3, visible: false, data: { title: 'Avis Google', reviewCount: 0, rating: 5, ctaText: 'Voir nos avis', ctaUrl: '', testimonials: [], style: { backgroundColor: '', textColor: '' } } },
+  { type: 'google-reviews', order: 3, visible: true, data: { title: 'Avis Google', reviewCount: 0, rating: 5, ctaText: 'Voir nos avis', ctaUrl: '', testimonials: [], style: { backgroundColor: '', textColor: '' } } },
   { type: 'booking-widget', order: 4, data: { title: 'Réserver en ligne', calendarSlug: '', style: { backgroundColor: '', textColor: '' } } },
   { type: 'contact', order: 5, data: { title: 'Nous trouver', body: '', address: '', phone: '', email: '', hours: '', embedUrl: '', style: { backgroundColor: '', textColor: '' } } },
 ];
