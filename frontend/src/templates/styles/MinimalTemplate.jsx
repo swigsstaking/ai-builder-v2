@@ -10,7 +10,7 @@ import {
   Star,
   Calendar,
 } from 'lucide-react';
-import { getSection, getSectionData, isSectionVisible, getStarRating } from '../sectionHelpers';
+import { getSection, getSectionData, isSectionVisible, getStarRating, getContrastText } from '../sectionHelpers';
 
 /**
  * MinimalTemplate - Clean / minimal style with simple borders, light fonts, and lots of whitespace.
@@ -264,20 +264,42 @@ const MinimalTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
                   {aboutData.title || 'Notre cabinet'}
                 </h2>
                 <div className="text-gray-500 leading-relaxed" data-editable="content" dangerouslySetInnerHTML={{ __html: aboutData.body }} />
-              </div>
-              {aboutData.stats && aboutData.stats.length > 0 && (
-                <div className={isMobile ? 'mt-8 grid grid-cols-2 gap-6' : 'grid grid-cols-2 gap-6'}>
-                  {aboutData.stats.map((stat, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white p-6 rounded-lg border border-gray-100"
-                    >
-                      <div className="text-3xl font-semibold mb-1" style={{ color: primary }}>
-                        {stat.value}
+                {aboutData.stats && aboutData.stats.length > 0 && (
+                  <div className="mt-8 grid grid-cols-2 gap-6">
+                    {aboutData.stats.map((stat, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white p-6 rounded-lg border border-gray-100"
+                      >
+                        <div className="text-3xl font-semibold mb-1" style={{ color: primary }}>
+                          {stat.value}
+                        </div>
+                        <div className="text-gray-500 text-sm">{stat.label}</div>
                       </div>
-                      <div className="text-gray-500 text-sm">{stat.label}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Image column */}
+              {!isMobile && (
+                <div className="flex items-center justify-center">
+                  {aboutData.imageMediaId ? (
+                    <img
+                      src={typeof aboutData.imageMediaId === 'string' && aboutData.imageMediaId.startsWith('http') ? aboutData.imageMediaId : `/api/media/${aboutData.imageMediaId}/file`}
+                      alt={aboutData.title || 'À propos'}
+                      className="rounded-lg w-full max-h-[400px] object-cover"
+                    />
+                  ) : (
+                    <div
+                      data-editable="imageMediaId"
+                      className="w-full h-64 rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-300 cursor-pointer hover:border-gray-300 transition-colors"
+                    >
+                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                      </svg>
+                      <span className="text-xs">Ajouter une image</span>
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
@@ -465,12 +487,15 @@ const MinimalTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
                 />
               ) : (
                 <div
-                  className="w-28 h-28 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: `${primary}15` }}
+                  data-editable="photoMediaId"
+                  className="w-28 h-28 rounded-full border border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-gray-400 transition-colors"
+                  style={{ backgroundColor: `${primary}10` }}
                 >
-                  <svg className="w-14 h-14" style={{ color: `${primary}40` }} fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
                   </svg>
+                  <span className="text-[8px] text-gray-300">Photo</span>
                 </div>
               )}
             </div>

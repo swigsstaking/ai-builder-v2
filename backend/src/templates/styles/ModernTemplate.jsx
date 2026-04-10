@@ -247,7 +247,7 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
                     />
                   ) : (
                     <div
-                      data-image-field="imageMediaId"
+                      data-editable="imageMediaId"
                       className="w-full h-64 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 text-gray-400 cursor-pointer hover:border-gray-400 transition-colors"
                     >
                       <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
@@ -626,7 +626,7 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
                 />
               ) : (
                 <div
-                  data-image-field="photoMediaId"
+                  data-editable="photoMediaId"
                   className="w-32 h-32 rounded-full border-2 border-dashed border-white/40 shadow-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-white/60 transition-colors"
                   style={{ backgroundColor: `${primary}30` }}
                 >

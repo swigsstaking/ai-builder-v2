@@ -13,7 +13,7 @@ import {
   Star,
   Users,
 } from 'lucide-react';
-import { getSection, getSectionData, isSectionVisible, getStarRating } from '../sectionHelpers';
+import { getSection, getSectionData, isSectionVisible, getStarRating, getContrastText } from '../sectionHelpers';
 
 /**
  * ElegantTemplate - Refined / luxury style with serif fonts, thin lines, and minimal ornamentation.
@@ -247,12 +247,15 @@ const ElegantTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
                 />
               ) : (
                 <div
-                  className="w-36 h-36 rounded-full shadow-lg flex items-center justify-center"
-                  style={{ border: `1px solid ${primary}40`, backgroundColor: `${primary}20` }}
+                  data-editable="photoMediaId"
+                  className="w-36 h-36 rounded-full border border-dashed shadow-lg flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-opacity-60 transition-colors"
+                  style={{ borderColor: `${primary}60`, backgroundColor: `${primary}15` }}
                 >
-                  <svg className="w-16 h-16" style={{ color: `${primary}60` }} fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  <svg className="w-10 h-10" style={{ color: `${primary}50` }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
                   </svg>
+                  <span className="text-[8px] tracking-[0.15em] uppercase" style={{ color: `${primary}50`, fontFamily: 'system-ui' }}>Photo</span>
                 </div>
               )}
             </div>
@@ -480,10 +483,34 @@ const ElegantTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
                   dangerouslySetInnerHTML={{ __html: aboutData.body }}
                 />
               </div>
-              {aboutData.stats && aboutData.stats.length > 0 && (
-                <div className={isMobile ? 'mt-12 grid grid-cols-2 gap-8' : 'flex flex-col gap-8'}>
+              {/* Image column */}
+              {!isMobile && (
+                <div className="flex items-center justify-center">
+                  {aboutData.imageMediaId ? (
+                    <img
+                      src={typeof aboutData.imageMediaId === 'string' && aboutData.imageMediaId.startsWith('http') ? aboutData.imageMediaId : `/api/media/${aboutData.imageMediaId}/file`}
+                      alt={aboutData.title || 'À propos'}
+                      className="rounded-lg shadow-lg w-full max-h-[400px] object-cover"
+                      style={{ border: `1px solid ${primary}30` }}
+                    />
+                  ) : (
+                    <div
+                      data-editable="imageMediaId"
+                      className="w-full h-64 rounded-lg border border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-opacity-60 transition-colors"
+                      style={{ borderColor: `${primary}50`, color: `${primary}60` }}
+                    >
+                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                      </svg>
+                      <span className="text-xs tracking-[0.2em] uppercase" style={{ fontFamily: 'system-ui' }}>Ajouter une image</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {isMobile && aboutData.stats && aboutData.stats.length > 0 && (
+                <div className="mt-12 grid grid-cols-2 gap-8">
                   {aboutData.stats.map((stat, idx) => (
-                    <div key={idx} className={isMobile ? '' : 'text-right'}>
+                    <div key={idx}>
                       <div className="text-5xl font-light mb-2" style={{ color: primary }}>
                         {stat.value}
                       </div>
