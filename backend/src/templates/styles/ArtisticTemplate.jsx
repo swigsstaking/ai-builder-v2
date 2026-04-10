@@ -935,16 +935,17 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
           <div className="max-w-3xl mx-auto text-center relative z-10">
             <h2
               data-editable="headline"
-              className={`font-bold text-white mb-4 ${isMobile ? 'text-2xl' : 'text-4xl'}`}
+              className={`font-bold mb-4 ${isMobile ? 'text-2xl' : 'text-4xl'}`}
+              style={{ color: getContrastText(primary) }}
             >
               {ctaData.headline || 'Prêt à créer ensemble ?'}
             </h2>
-            <p data-editable="subtext" className="text-white/80 mb-8 text-lg">
+            <p data-editable="subtext" className="mb-8 text-lg" style={{ color: getContrastText(primary), opacity: 0.8 }}>
               {ctaData.subtext || 'Transformons vos idées en réalité'}
             </p>
             <button
               className="px-8 py-4 rounded-full font-semibold shadow-2xl hover:scale-105 transition-transform"
-              style={{ backgroundColor: 'white', color: primary }}
+              style={{ backgroundColor: getContrastText(primary) === '#ffffff' ? 'white' : primary, color: getContrastText(primary) === '#ffffff' ? primary : 'white' }}
             >
               {ctaData.buttonText || 'Démarrer un projet'} <Rocket className="inline w-5 h-5 ml-2" />
             </button>

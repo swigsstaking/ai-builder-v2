@@ -92,10 +92,19 @@ export function mapAiContentToSections(sections, content, options = {}) {
         if (content.ctaBanner) sData.data = { ...s.data, ...content.ctaBanner };
         break;
 
-      case 'testimonials':
-        if (content.testimonials?.items) sData.data = { ...s.data, items: content.testimonials.items };
-        else if (Array.isArray(content.testimonials)) sData.data = { ...s.data, items: content.testimonials };
+      case 'testimonials': {
+        let tItems = content.testimonials?.items || (Array.isArray(content.testimonials) ? content.testimonials : null);
+        if (tItems) {
+          tItems = tItems.map(t => ({
+            author: t.author || t.name || '',
+            quote: t.quote || t.text || '',
+            role: t.role || t.location || '',
+            rating: t.rating,
+          }));
+          sData.data = { ...s.data, items: tItems };
+        }
         break;
+      }
 
       case 'faq':
         if (content.faq?.items) sData.data = { ...s.data, items: content.faq.items };

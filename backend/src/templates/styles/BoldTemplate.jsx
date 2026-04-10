@@ -510,14 +510,15 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <h2
               data-editable="headline"
-              className={`font-black text-white mb-6 ${isMobile ? 'text-3xl' : 'text-5xl lg:text-6xl'}`}
+              className={`font-black mb-6 ${isMobile ? 'text-3xl' : 'text-5xl lg:text-6xl'}`}
+              style={{ color: getContrastText(primary) }}
             >
               {ctaData.headline || 'PRÊT À DOMINER ?'}
             </h2>
-            <div data-editable="body" className="text-white/80 mb-10 text-xl" dangerouslySetInnerHTML={{ __html: ctaData.body || 'Rejoignez les leaders de demain' }} />
+            <div data-editable="body" className="mb-10 text-xl" style={{ color: getContrastText(primary), opacity: 0.8 }} dangerouslySetInnerHTML={{ __html: ctaData.body || 'Rejoignez les leaders de demain' }} />
             <button
               className="px-12 py-6 font-bold uppercase tracking-wider text-lg hover:scale-105 transition-transform"
-              style={{ backgroundColor: secondary, color: 'white' }}
+              style={{ backgroundColor: secondary, color: getContrastText(secondary) }}
             >
               {ctaData.ctaText || 'Démarrer maintenant'} <Trophy className="inline w-5 h-5 ml-2" />
             </button>

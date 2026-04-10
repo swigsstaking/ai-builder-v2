@@ -532,14 +532,15 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
           <div className="max-w-3xl mx-auto text-center">
             <h2
               data-editable="headline"
-              className={`font-bold text-white mb-4 ${isMobile ? 'text-2xl' : 'text-3xl'}`}
+              className={`font-bold mb-4 ${isMobile ? 'text-2xl' : 'text-3xl'}`}
+              style={{ color: getContrastText(primary) }}
             >
               {ctaData.headline || 'Prêt à commencer ?'}
             </h2>
-            <div data-editable="body" className="text-white/80 mb-8" dangerouslySetInnerHTML={{ __html: ctaData.body || 'Contactez-nous dès aujourd\'hui pour discuter de votre projet' }} />
+            <div data-editable="body" className="mb-8" style={{ color: getContrastText(primary), opacity: 0.85 }} dangerouslySetInnerHTML={{ __html: ctaData.body || 'Contactez-nous dès aujourd\'hui pour discuter de votre projet' }} />
             <button
               className="px-8 py-3.5 font-medium rounded-lg shadow-xl hover:shadow-2xl transition-all hover:scale-105"
-              style={{ backgroundColor: 'white', color: primary }}
+              style={{ backgroundColor: getContrastText(primary) === '#ffffff' ? 'white' : primary, color: getContrastText(primary) === '#ffffff' ? primary : 'white' }}
             >
               {ctaData.ctaText || 'Nous contacter'} <ChevronRight className="inline w-4 h-4 ml-1" />
             </button>

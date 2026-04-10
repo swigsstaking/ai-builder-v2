@@ -787,8 +787,8 @@ const ElegantTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
               {ctaData.subtitle || 'Laissez-nous vous accompagner'}
             </p>
             <button
-              className="px-12 py-4 text-sm tracking-[0.2em] uppercase text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: secondary, fontFamily: 'system-ui' }}
+              className="px-12 py-4 text-sm tracking-[0.2em] uppercase transition-opacity hover:opacity-90"
+              style={{ backgroundColor: secondary, color: getContrastText(secondary), fontFamily: 'system-ui' }}
               data-editable="buttonText"
             >
               {ctaData.buttonText || 'Prendre rendez-vous'}

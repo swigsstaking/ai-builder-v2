@@ -668,17 +668,18 @@ const MinimalTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
         >
           <div className="max-w-2xl mx-auto text-center">
             <h2
-              className={`font-semibold text-white mb-4 ${isMobile ? 'text-2xl' : 'text-3xl'}`}
+              className={`font-semibold mb-4 ${isMobile ? 'text-2xl' : 'text-3xl'}`}
+              style={{ color: getContrastText(secondary) }}
               data-editable="headline"
             >
               {ctaData.headline || 'Prêt à commencer ?'}
             </h2>
-            <p className="text-white/60 mb-8" data-editable="subtitle">
+            <p className="mb-8" style={{ color: getContrastText(secondary), opacity: 0.6 }} data-editable="subtitle">
               {ctaData.subtitle || 'Contactez-nous pour discuter de vos besoins'}
             </p>
             <button
               className="px-8 py-3 text-sm font-medium rounded-md"
-              style={{ backgroundColor: primary, color: 'white' }}
+              style={{ backgroundColor: primary, color: getContrastText(primary) }}
               data-editable="buttonText"
             >
               {ctaData.buttonText || 'Prendre rendez-vous'}
