@@ -248,7 +248,7 @@ const ElegantTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
               ) : (
                 <div
                   data-editable="photoMediaId"
-                  className="w-36 h-36 rounded-full border border-dashed shadow-lg flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-opacity-60 transition-colors"
+                  className="photo-editor w-36 h-36 rounded-full border border-dashed shadow-lg flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-opacity-60 transition-colors"
                   style={{ borderColor: `${primary}60`, backgroundColor: `${primary}15` }}
                 >
                   <svg className="w-10 h-10" style={{ color: `${primary}50` }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
@@ -496,7 +496,7 @@ const ElegantTemplate = ({ sections = [], site = {}, isMobile = false, onNavigat
                   ) : (
                     <div
                       data-editable="imageMediaId"
-                      className="w-full h-64 rounded-lg border border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-opacity-60 transition-colors"
+                      className="image-placeholder w-full h-64 rounded-lg border border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-opacity-60 transition-colors"
                       style={{ borderColor: `${primary}50`, color: `${primary}60` }}
                     >
                       <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">

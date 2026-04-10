@@ -337,7 +337,7 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
                   ) : (
                     <div
                       data-editable="imageMediaId"
-                      className="w-full h-64 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                      className="image-placeholder w-full h-64 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ borderColor: `${accent}60`, backgroundColor: `${primary}15` }}
                     >
                       <svg className="w-10 h-10" style={{ color: `${accent}80` }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
@@ -679,7 +679,7 @@ const ArtisticTemplate = ({ sections = [], site = {}, isMobile = false, onNaviga
               ) : (
                 <div
                   data-editable="photoMediaId"
-                  className="w-36 h-36 rounded-full rotate-3 border-2 border-dashed border-white/40 shadow-2xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-white/60 transition-colors"
+                  className="photo-editor w-36 h-36 rounded-full rotate-3 border-2 border-dashed border-white/40 shadow-2xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-white/60 transition-colors"
                   style={{ background: `linear-gradient(135deg, ${primary}30, ${accent}30)` }}
                 >
                   <svg className="w-10 h-10 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">

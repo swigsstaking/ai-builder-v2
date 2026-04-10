@@ -243,7 +243,7 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
                   ) : (
                     <div
                       data-editable="imageMediaId"
-                      className="w-full h-64 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 text-gray-400 cursor-pointer hover:border-gray-400 transition-colors"
+                      className="image-placeholder w-full h-64 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 text-gray-400 cursor-pointer hover:border-gray-400 transition-colors"
                     >
                       <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
@@ -612,7 +612,7 @@ const BoldTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate =
               ) : (
                 <div
                   data-editable="photoMediaId"
-                  className="w-36 h-36 border-2 border-dashed border-white/40 shadow-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-white/60 transition-colors"
+                  className="photo-editor w-36 h-36 border-2 border-dashed border-white/40 shadow-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-white/60 transition-colors"
                   style={{ backgroundColor: `${primary}30` }}
                 >
                   <svg className="w-10 h-10 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">

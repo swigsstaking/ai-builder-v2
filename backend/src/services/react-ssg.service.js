@@ -357,6 +357,14 @@ export async function renderPage(site, page, options = {}) {
     body { -webkit-font-smoothing: antialiased; }
     img { max-width: 100%; height: auto; }
     .is-editor [data-editable]:hover { outline: 2px dashed rgba(124,58,237,0.6); outline-offset: 3px; }
+    /* Image placeholders: hidden in preview, visible in editor */
+    .image-placeholder { display: none !important; }
+    .is-editor .image-placeholder { display: flex !important; }
+    /* Hero photo: show silhouette in preview, camera in editor */
+    .photo-silhouette { display: flex; }
+    .photo-editor { display: none; }
+    .is-editor .photo-silhouette { display: none; }
+    .is-editor .photo-editor { display: flex; }
   </style>
 </head>
 <body>
