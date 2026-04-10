@@ -14,7 +14,7 @@ import {
   MessageSquareQuote,
   Calendar,
 } from 'lucide-react';
-import { getSectionData, isSectionVisible, getVisibleSections, getStarRating } from '../sectionHelpers';
+import { getSectionData, isSectionVisible, getVisibleSections, getStarRating, getContrastText } from '../sectionHelpers';
 
 /**
  * ModernTemplate - Modern / clean style with rounded cards, gradients, and a polished look.
@@ -236,6 +236,28 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
                   </button>
                 )}
               </div>
+              {/* Image column */}
+              {!isMobile && (
+                <div className="flex items-center justify-center">
+                  {aboutData.imageMediaId ? (
+                    <img
+                      src={typeof aboutData.imageMediaId === 'string' && aboutData.imageMediaId.startsWith('http') ? aboutData.imageMediaId : `/api/media/${aboutData.imageMediaId}/file`}
+                      alt={aboutData.title || 'À propos'}
+                      className="rounded-2xl shadow-lg w-full max-h-[400px] object-cover"
+                    />
+                  ) : (
+                    <div
+                      data-image-field="imageMediaId"
+                      className="w-full h-64 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 text-gray-400 cursor-pointer hover:border-gray-400 transition-colors"
+                    >
+                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                      </svg>
+                      <span className="text-xs">Ajouter une image</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -604,12 +626,15 @@ const ModernTemplate = ({ sections = [], site = {}, isMobile = false, onNavigate
                 />
               ) : (
                 <div
-                  className="w-32 h-32 rounded-full border-4 border-white/20 shadow-xl flex items-center justify-center"
-                  style={{ backgroundColor: `${primary}60` }}
+                  data-image-field="photoMediaId"
+                  className="w-32 h-32 rounded-full border-2 border-dashed border-white/40 shadow-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-white/60 transition-colors"
+                  style={{ backgroundColor: `${primary}30` }}
                 >
-                  <svg className="w-16 h-16 text-white/40" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  <svg className="w-10 h-10 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
                   </svg>
+                  <span className="text-[8px] text-white/40">Photo</span>
                 </div>
               )}
             </div>
