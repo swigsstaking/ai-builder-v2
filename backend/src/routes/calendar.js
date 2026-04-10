@@ -62,14 +62,20 @@ router.patch('/services/reorder', (req, res) =>
   proxyToCalendar(req, res, { method: 'PATCH', path: '/api/services/reorder', body: req.body }));
 
 // ─── Booking Profile ───
-router.get('/booking-profile', (req, res) =>
-  proxyToCalendar(req, res, { method: 'GET', path: '/api/booking-profile' }));
+router.get('/booking-profile', (req, res) => {
+  const siteId = req.query.siteId || '';
+  const qs = siteId ? `?siteId=${siteId}` : '';
+  proxyToCalendar(req, res, { method: 'GET', path: `/api/booking-profile${qs}` });
+});
 
 router.post('/booking-profile', (req, res) =>
   proxyToCalendar(req, res, { method: 'POST', path: '/api/booking-profile', body: req.body }));
 
-router.put('/booking-profile', (req, res) =>
-  proxyToCalendar(req, res, { method: 'PUT', path: '/api/booking-profile', body: req.body }));
+router.put('/booking-profile', (req, res) => {
+  const siteId = req.query.siteId || '';
+  const qs = siteId ? `?siteId=${siteId}` : '';
+  proxyToCalendar(req, res, { method: 'PUT', path: `/api/booking-profile${qs}`, body: req.body });
+});
 
 router.get('/booking-profile/check-slug/:slug', (req, res) =>
   proxyToCalendar(req, res, { method: 'GET', path: `/api/booking-profile/check-slug/${req.params.slug}` }));

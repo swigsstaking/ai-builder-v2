@@ -319,7 +319,7 @@ export default function BookingCreatePage() {
           .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
           .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-        // Try to create BookingProfile, fall back to existing one
+        // Create BookingProfile for this site, or fetch existing one for this siteId
         let profile;
         try {
           profile = await calendarApi.createBookingProfile({
@@ -328,16 +328,22 @@ export default function BookingCreatePage() {
             description: `${effectiveSpecialty.trim()}${city.trim() ? ` à ${city.trim()}` : ''}`,
             branding: { primaryColor: activeColors.primary },
             bookingSettings: { autoConfirm: true, slotInterval: 30 },
+            siteId: site._id,
           });
         } catch (createErr) {
-          // Profile already exists for this user → fetch it
-          console.warn('[Calendar] Create failed, fetching existing profile:', createErr.error || createErr.message);
-          profile = await calendarApi.getBookingProfile();
+          console.warn('[Calendar] Create failed, fetching profile for site:', createErr.error || createErr.message);
+          // Try to get the profile for this specific site
+          try {
+            profile = await calendarApi.getBookingProfile(site._id);
+          } catch (e2) {
+            console.warn('[Calendar] No profile found for site, using slug as-is');
+          }
         }
         calendarSlug = profile?.slug || slugBase;
-        console.log('[Calendar] Using slug:', calendarSlug);
+        const profileId = profile?._id || null;
+        console.log('[Calendar] Using slug:', calendarSlug, 'profileId:', profileId);
 
-        // Push AI-generated services to Calendar
+        // Push AI-generated services to Calendar, linked to this profile
         const { page: updatedPage } = await pagesApi.getOne(page._id);
         const svcSection = updatedPage.sections?.find(s => s.type === 'services-booking');
         const aiServices = svcSection?.data?.services || [];
@@ -349,6 +355,7 @@ export default function BookingCreatePage() {
               duration: parseInt(svc.duration) || 60,
               price: parseFloat(svc.price) || null,
               currency: 'CHF',
+              bookingProfileId: profileId,
             });
           } catch (e) { console.warn('[Calendar] Service creation failed:', svc.name, e.message); }
         }

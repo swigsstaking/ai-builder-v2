@@ -133,9 +133,9 @@ export const calendarApi = {
   deleteService: (id) => api.delete(`/calendar/services/${id}`),
   reorderServices: (data) => api.patch('/calendar/services/reorder', data),
   // Booking Profile
-  getBookingProfile: () => api.get('/calendar/booking-profile'),
+  getBookingProfile: (siteId) => api.get(`/calendar/booking-profile${siteId ? `?siteId=${siteId}` : ''}`),
   createBookingProfile: (data) => api.post('/calendar/booking-profile', data),
-  updateBookingProfile: (data) => api.put('/calendar/booking-profile', data),
+  updateBookingProfile: (data, siteId) => api.put(`/calendar/booking-profile${siteId ? `?siteId=${siteId}` : ''}`, data),
   checkSlug: (slug) => api.get(`/calendar/booking-profile/check-slug/${slug}`),
   // Preferences (working hours)
   updatePreferences: (data) => api.patch('/calendar/preferences', data),
